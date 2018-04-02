@@ -41,7 +41,6 @@ public class HilbertMap: MonoBehaviour {
    }
 
    public TextAsset     source;
-   public string        startDate;
    public int           sideDivBits = 6;
    public float         divSize     = 0.01f;
    public SpanAlignment squareTimeSpan;
@@ -722,7 +721,9 @@ public class HilbertMap: MonoBehaviour {
       elementsByListing = new Dictionary< Selectable, Element >();
       elementsPerLayer  = new Dictionary< string, List< Element > >();
 
-      lifeStartTime = StringToDate( startDate );
+      bool foundStartTime = false;
+
+      //lifeStartTime = StringToDate( startDate );
 
       string[] fileLines;
 
@@ -769,8 +770,18 @@ public class HilbertMap: MonoBehaviour {
 
          string[] split = fileLines[ fl ].Split( '\t' );
 
-         DateTime startTime = lifeStartTime;
-         if (split[ 3 ] != "--" && split[ 3 ].Length == 10) { startTime = StringToDate( split[ 3 ] ); }
+         DateTime startTime = default( DateTime );
+
+         if (split[ 3 ] != "--" && split[ 3 ].Length == 10) {
+
+            startTime = StringToDate( split[ 3 ] );
+
+            if (!foundStartTime || lifeStartTime > startTime) {
+
+               foundStartTime = true;
+               lifeStartTime  = startTime;
+            }
+         }
 
          DateTime endTime = DateTime.Now;
          //Debug.Log( "Parsing end date: " + split[ 4 ] + "; length: " + split[ 4 ].Length );
@@ -833,7 +844,7 @@ public class HilbertMap: MonoBehaviour {
 
       //Debug.Log( "Generating..." );
 
-      mapStartTime  = StringToDate( startDate );
+      mapStartTime  = lifeStartTime;
 
       if (alignSquaresWithCalendar) {
 
