@@ -1,0 +1,36 @@
+notes for life distribution
+
++ use linear YUV space to generate lightened colours
++ allow colours to be specified in spreadsheet
++ fix guides being duplicated when changing alignment
++ fix guides not deactivating when changing alignment
++ element listings should be coloured
++ remove button borders
+- move alignment and guide controls to top right
+- allow highlighting months of year, years, and decades
++ remove 'guide' layer listing
+- sort mesh height by size of element so smallest is on top
+- fade other elements to low opacity instead of hiding them when mousing over one
+- show all applicable element details depending on mouse position
+- highlight currently selected listings/options
+- show very faded guides for areas preceding/following the lifetime
+- include togglable edge-detected hilbert curve overlay to make contiguous time areas easier to see
++ fix '1984s' to say '1980s'
+- show 'start to end time' and 'total contiguous time' separately for multi-block elements
+- show individual date ranges (smaller, underneath main start/end dates) for multi-block elements
+- element details should be coloured
+- implement weeks guide (no labels)
+- add option for automatic panning and zooming
+- allow mousewheel scrolling and drag-to-pan
++ limit width of element labels and add darkened backing beyond outline
+- allow aligning to beginning, middle or end of square time period instead of always the beginning
+- fix off-by-one issues with alignment by months etc
+- calculate time spans by comparing year/month/day values rather than using absolute number of days
++ move edges inwards so adjacent areas' edges don't overlap
+
++ height order:
+--- element labels
+--- guide labels
+--- element edges
+--- guide edges
+--- element meshes
