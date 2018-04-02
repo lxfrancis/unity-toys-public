@@ -1,6 +1,6 @@
 ## Hilbert Map
 
-This is a little toy I made on a whim. It takes input from a tab-separated text file `input.txt` in the same directory as the executable, and creates a two-dimensional map of grouped time-span data using a Hilbert curve. It assumes timescales on the order of decades. I tested it with data about my life - places I've lived, people I've lived with, schools and universities I attended, etc. Basically I just wanted to visually compare timespans and see what my life would look like when laid out like this.
+This is a little toy I made on a whim. It takes input from a tab-separated text file `input.txt` in the same directory as the executable, and creates a two-dimensional map of grouped time-span data using a Hilbert curve. It assumes timescales on the order of decades. I tested it with data about my life - places I've lived, people I've lived with, schools and universities I attended, etc. Basically I just wanted to visually compare timespans and see what my life would look like when laid out like this. It was more or less a weekend project, so the code is quick and dirty and not nicely compartmentalised (monolithic classes ftl). Done in Unity 2017.3 in the Unity Toys mother-project.
 
 ![a screenshot of the toy in action](screenshot.jpg)
 
