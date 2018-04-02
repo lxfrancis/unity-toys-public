@@ -2,7 +2,7 @@
 
 This is a little toy I made on a whim. It takes input from a tab-separated text file `input.txt` in the same directory as the executable, and creates a two-dimensional map of grouped time-span data using a Hilbert curve. It assumes timescales on the order of decades. I tested it with data about my life - places I've lived, people I've lived with, schools and universities I attended, etc. Basically I just wanted to visually compare timespans and see what my life would look like when laid out like this. It was more or less a weekend project, so the code is quick and dirty and not nicely compartmentalised (monolithic classes ftl). Done in Unity 2017.3 in the Unity Toys mother-project.
 
-![a screenshot of the toy in action](screenshot.jpg)
+![a screenshot of the toy in action](Readme-resources/screenshot.jpg)
 
 The easiest way to enter the data is to use Google Sheets, and copy-paste the whole block of data into a text editor (make sure spaces-for-tabs isn't messing up the tabs). Each line should be five cells long minimum, with the five cells containing the following data: layer, group, name, start date and end date. Dates must be in the format YYYY-MM-DD. For example:
 
@@ -12,11 +12,11 @@ Optionally, a sixth cell can contain the colour you want for that piece of data,
 
 You can list multiple entries with the same name - this way you can have a single datum correspond to multiple separate units of time. I used this to add university semesters separately.
 
-![entering the data in Google Sheets](sheets.png)
+![entering the data in Google Sheets](Readme-resources/sheets.png)
 
 *Example data in Google Sheets...*
 
-![the data in a text editor](text.png)
+![the data in a text editor](Readme-resources/text.png)
 
 *...And in a text editor*
 
