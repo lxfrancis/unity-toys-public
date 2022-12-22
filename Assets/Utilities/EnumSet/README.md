@@ -4,7 +4,7 @@ Are you like me and very often find yourself using sets of fields in Unity class
 
 I got tired of doing this so made an easy-to-use collection type that does everything I'd espect from a basic supported collection type in C#/Unity. `EnumSet` is a dictionary-like generic type that uses the values of an enum type as its keys, and whatever you want as its values. It has its own property drawer for use in a Unity inspector, serialises properly and robustly, and can be used outside of Unity without modification as a plain code-only collection type.
 
-![Example of EnumSet usage in code](Readme-resources/EnumSetTest-code.png) ![Resulting Unity inspector](Readme-resources/EnumSetTest-inspector)
+![Example of EnumSet usage in code](Readme-resources/EnumSetTest-code.png) ![Resulting Unity inspector](Readme-resources/EnumSetTest-inspector.png)
 
 The value type can be anything you like; if serialised, the property drawer will handle it - with the exception of regular lists and arrays, due to a quirk of nested serialisation in Unity I haven't quite worked out. However, there's an `EnumSetList< T >` generic type provided in lieu, which works just fine as a serialisable stand-in for a list/array. It implements `IList< T >`. Otherwise, types with weird custom property drawers or whatever should work just fine with `EnumSet` including prefab override marking. The inspector will warn when attempting to use regular lists or arrays.
 
