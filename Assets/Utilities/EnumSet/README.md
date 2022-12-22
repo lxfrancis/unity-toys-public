@@ -2,7 +2,7 @@
 
 Are you like me and very often find yourself using sets of fields in Unity classes that correspond to values in an enum type? Like.. you want to associate the values of an enum with a set of colors, or sprites, or serialized objects, or a weird struct you pulled from StackOverflow, whatever.
 
-I got tired of doing this so made an easy-to-use collection type that does everything I'd espect from a basic supported collection type in C#/Unity. `EnumSet` is a dictionary-like generic type that uses the values of an enum type as its keys, and whatever you want as its values. It has its own property drawer for use in a Unity inspector, serialises properly and robustly, and can be used outside of Unity without modification as a plain code-only collection type.
+I got tired of doing this so made an easy-to-use collection type that does everything I'd expect from a basic supported collection type in C#/Unity. `EnumSet` is a dictionary-like generic type that uses the values of an enum type as its keys, and whatever you want as its values. It has its own property drawer for use in a Unity inspector, serialises properly and robustly, and can be used outside of Unity without modification as a plain code-only collection type.
 
 ```cs
 public class EnumSetTest: MonoBehaviour {
