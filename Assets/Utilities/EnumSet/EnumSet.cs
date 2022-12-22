@@ -161,7 +161,10 @@ namespace Lx {
     [Serializable]
     public class EnumSetList< TValue >: IList< TValue > {
 
-        [SerializeField] List< TValue > items = new List< TValue >();
+#if UNITY_5_3_OR_NEWER
+        [SerializeField]
+#endif
+        List< TValue > items = new List< TValue >();
         
         // IList implementation
         public int Count => items.Count;
