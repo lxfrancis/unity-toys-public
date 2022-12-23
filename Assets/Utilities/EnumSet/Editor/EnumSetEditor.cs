@@ -173,6 +173,8 @@ namespace Lx {
             EditorGUI.IntField( countRect, valuesProperty?.arraySize ?? 0 );
 
             if (valuesProperty == null) { showingWarnings = true; }
+            
+            EditorGUI.EndFoldoutHeaderGroup();
 
             if (property.isExpanded) {
             
@@ -183,8 +185,6 @@ namespace Lx {
 
                 EditorGUI.indentLevel--;
             }
-            
-            EditorGUI.EndFoldoutHeaderGroup();
             
             EditorGUI.EndProperty();
         }
