@@ -3,31 +3,21 @@ using UnityEditor;
 
 namespace Lx {
 
-   public class SerializedNullableDrawer< T >: PropertyDrawer {
+    [CustomPropertyDrawer( typeof( SerializedNullable<> ), true )]
+    public class SerializedNullableDrawer: SimplePropertyDrawer {
 
-      public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
-      
-         EditorGUI.BeginProperty( position, label, property );
-         position              = EditorGUI.PrefixLabel( position, GUIUtility.GetControlID( FocusType.Passive ), label );
-         int indent            = EditorGUI.indentLevel;
-         EditorGUI.indentLevel = 0;
-        
-         Rect hasValueRect = new Rect( position.x,      position.y, 20, 				     position.height );
-         Rect valueRect    = new Rect( position.x + 30, position.y, position.width - 30, position.height );
-         EditorGUI.PropertyField( hasValueRect, property.FindPropertyRelative("hasValue"), GUIContent.none );
-         EditorGUI.PropertyField( valueRect,    property.FindPropertyRelative("value"),    GUIContent.none );
-        
-         EditorGUI.indentLevel = indent;
-         EditorGUI.EndProperty();
-      }
-   }
+        const float checkboxWidth = 20f;
 
-   [CustomPropertyDrawer( typeof( NullableInt ) )]
-   public class NullableIntDrawer: SerializedNullableDrawer< NullableInt > { }
+        public override void DrawControl( Rect rect, SerializedProperty property ) {
 
-   [CustomPropertyDrawer( typeof( NullableFloat ) )]
-   public class NullableFloatDrawer: SerializedNullableDrawer< NullableFloat > { }
+            var rects         = Utils.SplitRectHorizontal( rect, checkboxWidth, gapSize: 4f );
+            rects.left.height = EditorGUIUtility.singleLineHeight;
+            
+            EditorGUI.PropertyField( rects.left,  property.FindPropertyRelative( "hasValue" ), GUIContent.none );
+            EditorGUI.PropertyField( rects.right, property.FindPropertyRelative( "value" ),    GUIContent.none );
+        }
 
-   [CustomPropertyDrawer( typeof( NullableColor ) )]
-   public class NullableColorDrawer: SerializedNullableDrawer< NullableColor > { }
+        public override float GetPropertyHeight( SerializedProperty property, GUIContent label )
+            => EditorGUI.GetPropertyHeight( property.FindPropertyRelative( "value" ) );
+    }
 }

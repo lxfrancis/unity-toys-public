@@ -1,8 +1,6 @@
 ﻿// Methods for elegant pair and elegant unpair, and test code
 // by Lexa Francis, 2014-2017
 
-using UnityEngine;
-using System.Collections.Generic;
 using System;
 
 namespace Lx {
@@ -24,17 +22,20 @@ namespace Lx {
             }
 
             if (x > max || x < min) {
-               throw new ArgumentOutOfRangeException( "x",
-                 "Arguments must not have an absolute value greater than " + max + ". Value given: " + x );
+               throw new ArgumentOutOfRangeException( nameof( x ),
+                   $"Arguments must not have an absolute value greater than {max}. Value given: {x}" );
             }
+            
             if (y > max || y < min) {
-               throw new ArgumentOutOfRangeException( "y",
-                 "Arguments must not have an absolute value greater than " + max + ". Value given: " + y );
+               throw new ArgumentOutOfRangeException( nameof( y ),
+                   $"Arguments must not have an absolute value greater than {max}. Value given: {y}" );
             }
+            
             if (max >= 4000000 || -min > 4000000) {
-               throw new ArgumentOutOfRangeException( "override_range",
-                 "Unable to unpair values with argument ranges over 4000000. Value given: " + overrideRange.Value );
+               throw new ArgumentOutOfRangeException( nameof( overrideRange ),
+                   $"Unable to unpair values with argument ranges over 4000000. Value given: {overrideRange}" );
             }
+            
             long nx = x < 0 ? x + flip : x;
             long ny = y < 0 ? y + flip : y;
             return (nx >= ny) ? (nx * nx + nx + ny) : (ny * ny + nx);
@@ -55,15 +56,17 @@ namespace Lx {
 
             int sqrtz = (int) Math.Sqrt( z );
             int sqz   = sqrtz * sqrtz;
-            long x = 0, y = 0;
+            long x, y;
 
-            if ((z - sqz) >= sqrtz) {
+            if (z - sqz >= sqrtz) {
                x = sqrtz;
                y = z - sqz - sqrtz;
-            } else {
+            }
+            else {
                x = z - sqz;
                y = sqrtz;
             }
+            
             if (x > max) { x -= flip; }
             if (y > max) { y -= flip; }
 

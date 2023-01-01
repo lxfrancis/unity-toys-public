@@ -3,90 +3,114 @@ using UnityEditor;
 
 namespace Lx {
 
-   [CustomPropertyDrawer( typeof( Coord2 ) )]
-   public class Coord2Drawer: PropertyDrawer {
+    [CustomPropertyDrawer( typeof( Coord2 ) )]
+    public class Coord2Drawer: SingleLinePropertyDrawer {
 
-	   public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
+        const float cellWidth    = 72f;
+        const float controlWidth = cellWidth * 2f;
 
-		   EditorGUI.BeginProperty( position, label, property );
-		   position              = EditorGUI.PrefixLabel( position, GUIUtility.GetControlID( FocusType.Passive ), label );
-		   int indent            = EditorGUI.indentLevel;
-		   EditorGUI.indentLevel = 0;
-		   Rect[] rects 		    = Utils.SplitRectHorizontal( position, new[] { 80f, 160f }, false );
+        static readonly float[] divisionPoints = { cellWidth, cellWidth * 2f };
 
-		   EditorUtils.DrawProperty( "X", property.FindPropertyRelative("x"), rects[ 0 ], 20 );
-		   EditorUtils.DrawProperty( "Y", property.FindPropertyRelative("y"), rects[ 1 ], 20 );
+        protected override bool controlHasPrefixLabel => true;
 
-		   EditorGUI.indentLevel = indent;
-		   EditorGUI.EndProperty();
-	   }
-   }
+        
+        public override void DrawControl( Rect position, SerializedProperty property ) {
 
-   [CustomPropertyDrawer( typeof( NullableCoord2 ) )]
-   public class NullableCoord2Drawer: SerializedNullableDrawer< NullableCoord2 > { }
+            Rect[] rects = Utils.SplitRectHorizontal( position, divisionPoints, false, 5, controlWidth, true );
 
-   [CustomPropertyDrawer( typeof( Coord3 ) )]
-   public class Coord3Drawer: PropertyDrawer {
+            EditorUtils.DrawLabelledProperty( "X", property.FindPropertyRelative( "x" ), rects[ 0 ], 12 );
+            EditorUtils.DrawLabelledProperty( "Y", property.FindPropertyRelative( "y" ), rects[ 1 ], 12 );
+        }
+    }
 
-	   public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
+    
+    [CustomPropertyDrawer( typeof( Coord3 ) )]
+    public class Coord3Drawer: SingleLinePropertyDrawer {
 
-		   EditorGUI.BeginProperty( position, label, property );
-		   position              = EditorGUI.PrefixLabel( position, GUIUtility.GetControlID( FocusType.Passive ), label );
-		   int indent            = EditorGUI.indentLevel;
-		   EditorGUI.indentLevel = 0;
-		   Rect[] rects 		    = Utils.SplitRectHorizontal( position, new[] { 80f, 160f, 240f }, false );
+        const float cellWidth    = 72f;
+        const float controlWidth = cellWidth * 3f;
 
-		   EditorUtils.DrawProperty( "X", property.FindPropertyRelative("x"), rects[ 0 ], 20 );
-		   EditorUtils.DrawProperty( "Y", property.FindPropertyRelative("y"), rects[ 1 ], 20 );
-		   EditorUtils.DrawProperty( "Z", property.FindPropertyRelative("z"), rects[ 2 ], 20 );
+        static readonly float[] divisionPoints = { cellWidth, cellWidth * 2f, cellWidth * 3f };
 
-		   EditorGUI.indentLevel = indent;
-		   EditorGUI.EndProperty();
-	   }
-   }
+        protected override bool controlHasPrefixLabel => true;
 
-   [CustomPropertyDrawer( typeof( NullableCoord3 ) )]
-   public class NullableCoord3Drawer: SerializedNullableDrawer< NullableCoord3 > { }
 
-   [CustomPropertyDrawer( typeof( Coord2Range ) )]
-   public class Coord2RangeDrawer: PropertyDrawer {
+        public override void DrawControl( Rect position, SerializedProperty property ) {
 
-      public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
-     
-         EditorGUI.BeginProperty( position, label, property );
-         position              = EditorGUI.PrefixLabel( position, GUIUtility.GetControlID( FocusType.Passive ), label );
-         int indent            = EditorGUI.indentLevel;
-         EditorGUI.indentLevel = 0;
-         
-         int x = 0;
-         Rect labelRect = new Rect( position.x + x,      position.y, 12, position.height );
-         Rect valueRect = new Rect( position.x + x + 12, position.y, 32, position.height );
-         EditorGUI.LabelField( labelRect, "X" );
-         EditorGUI.PropertyField( valueRect, property.FindPropertyRelative("xMin"), GUIContent.none );
-         
-         x += 48;
-         labelRect = new Rect( position.x + x,      position.y, 15, position.height );
-         valueRect = new Rect( position.x + x + 15, position.y, 32, position.height );
-         EditorGUI.LabelField( labelRect, "to" );
-         EditorGUI.PropertyField( valueRect, property.FindPropertyRelative("xMax"), GUIContent.none );
-         
-         x += 60;
-         labelRect = new Rect( position.x + x,      position.y, 12, position.height );
-         valueRect = new Rect( position.x + x + 12, position.y, 32, position.height );
-         EditorGUI.LabelField( labelRect, "Y" );
-         EditorGUI.PropertyField( valueRect, property.FindPropertyRelative("yMin"), GUIContent.none );
-         
-         x += 48;
-         labelRect = new Rect( position.x + x,      position.y, 15, position.height );
-         valueRect = new Rect( position.x + x + 15, position.y, 32, position.height );
-         EditorGUI.LabelField( labelRect, "to" );
-         EditorGUI.PropertyField( valueRect, property.FindPropertyRelative("yMax"), GUIContent.none );
-         
-         EditorGUI.indentLevel = indent;
-         EditorGUI.EndProperty();
-      }
-   }
+            Rect[] rects = Utils.SplitRectHorizontal( position, divisionPoints, false, 5, controlWidth, true );
 
-   [CustomPropertyDrawer( typeof( NullableCoord2Range ) )]
-   public class NullableCoord2RangeDrawer: SerializedNullableDrawer< NullableCoord2Range > { }
+            EditorUtils.DrawLabelledProperty( "X", property.FindPropertyRelative( "x" ), rects[ 0 ], 12 );
+            EditorUtils.DrawLabelledProperty( "Y", property.FindPropertyRelative( "y" ), rects[ 1 ], 12 );
+            EditorUtils.DrawLabelledProperty( "Z", property.FindPropertyRelative( "z" ), rects[ 2 ], 12 );
+        }
+    }
+
+    
+    [CustomPropertyDrawer( typeof( Coord2Range ) )]
+    public class Coord2RangeDrawer: SingleLinePropertyDrawer {
+
+        const float cellWidth      = 120f;
+        const float gap            = 10f;
+        const float axisLabelWidth = 12f;
+
+        static readonly float[] divs = { cellWidth, cellWidth * 2f };
+
+        protected override bool controlHasPrefixLabel => true;
+
+        
+        public override void DrawControl( Rect position, SerializedProperty property ) {
+            
+            var rects = Utils.SplitRectHorizontal( position, divs, false, gap, cellWidth * 2f, true );
+            
+            DrawAxis( rects[ 0 ], "x" );
+            DrawAxis( rects[ 1 ], "y" );
+
+            void DrawAxis( Rect rect, string axis ) {
+
+                var (labelRect, rangeRect) = Utils.SplitRectHorizontal( rect, axisLabelWidth );
+
+                EditorGUI.HandlePrefixLabel( position, labelRect, new GUIContent( axis.ToUpper() ) );
+                EditorUtils.DrawRangeControl( rangeRect, property.FindPropertyRelative( $"{axis}Min" ),
+                                              property.FindPropertyRelative( $"{axis}Max" ) );
+            }
+        }
+    }
+
+    
+    [CustomPropertyDrawer( typeof( Coord3Range ) )]
+    public class Coord3RangeDrawer: PropertyDrawer {
+
+        const float axisLabelWidth = 12f;
+
+        public override float GetPropertyHeight( SerializedProperty property, GUIContent label )
+            => EditorGUIUtility.singleLineHeight * 3f + 2f;
+
+        public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
+
+            EditorGUI.BeginProperty( position, label, property );
+            position = EditorGUI.PrefixLabel( position, GUIUtility.GetControlID( FocusType.Passive ), label );
+            
+            int indent            = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+            
+            var lineRect    = position;
+            lineRect.height = EditorGUIUtility.singleLineHeight;
+
+            DrawAxis( "x" );
+            DrawAxis( "y" );
+            DrawAxis( "z" );
+
+            EditorGUI.indentLevel = indent;
+            EditorGUI.EndProperty();
+
+            void DrawAxis( string axis ) {
+
+                EditorUtils.DrawRangeControl( lineRect, property.FindPropertyRelative( $"{axis}Min" ),
+                                              property.FindPropertyRelative( $"{axis}Max" ),
+                                              label: axis.ToUpper(), labelWidth: axisLabelWidth );
+
+                lineRect.y += lineRect.height + 1f;
+            }
+        }
+    }
 }

@@ -20,7 +20,7 @@ namespace Lx {
 
         public override void OnGUI( Rect position, SerializedProperty property, GUIContent label ) {
             
-            EditorGUI.BeginProperty( position, GUIContent.none, property );
+            label = EditorGUI.BeginProperty( position, label, property );
 
             property.isExpanded = true;
 
@@ -116,6 +116,7 @@ namespace Lx {
             
             Rect containerRect  = position;
             containerRect.xMin -= spacing;
+            // containerRect.xMin += (EditorGUI.indentLevel - 1) * 15f;
             containerRect.yMin += lineHeight + spacing;
 
             EditorGUI.HelpBox( containerRect, "", None );
@@ -137,9 +138,13 @@ namespace Lx {
                 }
             }
 
+            position.xMin += 15f;
+
             position.height = lineHeight;
             position.width -= spacing * 2.5f;
             position.y     += lineHeight + spacing * 2.5f;
+
+            EditorGUIUtility.labelWidth -= 15f * (property.depth + 1);
 
             for (int i = 0; i < valuesProperty?.arraySize && i < keyNames?.Length; i++) {
 
@@ -148,6 +153,8 @@ namespace Lx {
                 EditorGUI.PropertyField( position, elementProperty, elementLabel, elementProperty.isExpanded );
                 position.y += EditorGUI.GetPropertyHeight( elementProperty, elementLabel, true ) + 1;
             }
+
+            EditorGUIUtility.labelWidth += 15f;
         }
 
         
@@ -155,13 +162,17 @@ namespace Lx {
 
             property = serializedProperty;
 
-            EditorGUI.BeginProperty( position, label, property );
+            label = EditorGUI.BeginProperty( position, label, property );
+
+            var countRect    = position;
+            countRect.height = lineHeight;
+            countRect.xMin   = countRect.xMax - 48f - EditorGUI.indentLevel * 15f; // ew
+
+            position.xMin += EditorGUI.indentLevel * 15f; // ew ew
             
             Rect lineRect   = position;
+            // Debug.Log( $"{serializedProperty.name}; position: {position}" );
             lineRect.height = lineHeight;
-
-            var countRect  = lineRect;
-            countRect.xMin = countRect.xMax - 48f;
 
             property.isExpanded = EditorGUI.BeginFoldoutHeaderGroup( lineRect, property.isExpanded, label );
                 
@@ -177,13 +188,15 @@ namespace Lx {
             EditorGUI.EndFoldoutHeaderGroup();
 
             if (property.isExpanded) {
-            
-                EditorGUI.indentLevel++;
+
+                int oldIndent = EditorGUI.indentLevel;
+
+                EditorGUI.indentLevel = 0;
 
                 if (showingWarnings) { ShowWarnings( position ); }
                 else { ShowElements( position, valuesProperty ); }
 
-                EditorGUI.indentLevel--;
+                EditorGUI.indentLevel = oldIndent;
             }
             
             EditorGUI.EndProperty();

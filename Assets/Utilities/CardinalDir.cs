@@ -16,7 +16,7 @@ namespace Lx {
    
    /// <summary>A set of flags for each 2D cardinal direction.</summary>
    [Serializable]
-   public struct DirectionFlags: IEnumerable< CardinalDir >, IEnumerable {
+   public struct DirectionFlags: IEnumerable< CardinalDir > {
 
       public bool up, right, down, left;
       
@@ -32,36 +32,34 @@ namespace Lx {
          }
       }
 
-      public IEnumerator< CardinalDir > GetEnumerator() { return directions.GetEnumerator(); }
+      public IEnumerator< CardinalDir > GetEnumerator() => directions.GetEnumerator();
 
-      IEnumerator IEnumerable.GetEnumerator() { return directions.GetEnumerator(); }
-      
+      IEnumerator IEnumerable.GetEnumerator() => directions.GetEnumerator();
+
       /// <summary>Directions rotated 90 degrees clockwise.</summary>
-      public DirectionFlags rotated90 {
-         get {
-            return new DirectionFlags {
-               right = up,
-               down  = right,
-               left  = down,
-               up    = left
-            };
-         }
-      }
-      
+      public DirectionFlags rotated90 => new DirectionFlags {
+          right = up,
+          down  = right,
+          left  = down,
+          up    = left
+      };
+
       /// <summary>Flag for the given direction.</summary>
       public bool this[ CardinalDir dir ] {
-         get {
-            return dir.Map( CardinalDir.Up,    up    )
-                      .Map( CardinalDir.Right, right )
-                      .Map( CardinalDir.Down,  down  )
-                      .Map( CardinalDir.Left,  left  );
-         }
+         get => dir switch {
+             CardinalDir.Up    =>    up,
+             CardinalDir.Right => right,
+             CardinalDir.Down  =>  down,
+             CardinalDir.Left  =>  left,
+             _                 => throw new ArgumentOutOfRangeException( nameof( dir ), dir, null )
+         };
          set {
             switch (dir) {
                case CardinalDir.Up:    { up    = value; } break;
                case CardinalDir.Right: { right = value; } break;
                case CardinalDir.Down:  { down  = value; } break;
                case CardinalDir.Left:  { left  = value; } break;
+               default: throw new ArgumentOutOfRangeException( nameof( dir ), dir, null );
             }
          }
       }
@@ -74,37 +72,23 @@ namespace Lx {
          return rotated;
       }
 
-      public override bool Equals( object obj ) {
+      public override bool Equals( object obj )
+          => obj is DirectionFlags other && up   == other.up   && right == other.right
+                                         && down == other.down && left  == other.left;
 
-         if (obj is DirectionFlags) {
+      public bool Equals( DirectionFlags other )
+          => up == other.up && right == other.right && down == other.down && left == other.left;
 
-            DirectionFlags other = (DirectionFlags) obj;
-            return up == other.up && right == other.right && down == other.down && left == other.left;
-         }
-         return false;
-      }
+      public static bool operator ==( DirectionFlags a, DirectionFlags b ) => a.Equals( b );
 
-      public bool Equals( DirectionFlags other ) {
-         return up == other.up && right == other.right && down == other.down && left == other.left;
-      }
+      public static bool operator !=( DirectionFlags a, DirectionFlags b ) => !(a == b);
 
-      public static bool operator ==( DirectionFlags a, DirectionFlags b ) { return a.Equals( b ); }
+      public override string ToString() => "DirectionFlags( " + stringEncoding + " )";
 
-      public static bool operator !=( DirectionFlags a, DirectionFlags b ) { return !(a == b); }
+      public string stringEncoding
+          => string.Join( ", ", directions.Select( d => d.ToString().Substring( 0, 1 ) ).ToArray() );
 
-      public override string ToString() {
-         return "DirectionFlags( " + stringEncoding + " )";
-      }
-
-      public string stringEncoding {
-         get {
-            return string.Join( ", ", directions.Select( d => d.ToString().Substring( 0, 1 ) ).ToArray() );
-         }
-      }
-
-      public override int GetHashCode() {
-         return (up ? 8 : 0) | (right ? 4 : 0) | (down ? 2 : 0) | (left ? 1 : 0);
-      }
+      public override int GetHashCode() => unchecked( (up ? 8 : 0) | (right ? 4 : 0) | (down ? 2 : 0) | (left ? 1 : 0) );
    }
    
    /// <summary>Utility methods for working with CardinalDir.</summary>
@@ -119,77 +103,51 @@ namespace Lx {
          if (y < -0.5f) { return CardinalDir.Down;  }
          return null;
       }
-      
+
       /// <summary>Returns a rotation pointing in the given direction.</summary>
-      public static Quaternion Rotation( this CardinalDir direction ) {
+      public static Quaternion Rotation( this CardinalDir direction ) => direction switch {
+          CardinalDir.Up    => Quaternion.Euler( 0.0f, 0.0f,   0.0f ),
+          CardinalDir.Right => Quaternion.Euler( 0.0f, 90.0f,  0.0f ),
+          CardinalDir.Down  => Quaternion.Euler( 0.0f, 180.0f, 0.0f ),
+          CardinalDir.Left  => Quaternion.Euler( 0.0f, -90.0f, 0.0f ),
+          _                 => Quaternion.identity
+      };
 
-         switch (direction) {
-
-            case CardinalDir.Up:    { return Quaternion.Euler( 0.0f,   0.0f, 0.0f ); }
-            case CardinalDir.Right: { return Quaternion.Euler( 0.0f,  90.0f, 0.0f ); }
-            case CardinalDir.Down:  { return Quaternion.Euler( 0.0f, 180.0f, 0.0f ); }
-            case CardinalDir.Left:  { return Quaternion.Euler( 0.0f, -90.0f, 0.0f ); }
-         }
-         return Quaternion.identity;
-      }
-      
       /// <summary>Returns a Coord2 pointing in the given direction.</summary>
-      public static Coord2 RelativeCoord2( this CardinalDir direction ) {
+      public static Coord2 RelativeCoord2( this CardinalDir direction ) => direction switch {
+          CardinalDir.Up    => new Coord2(  0, 1 ),
+          CardinalDir.Right => new Coord2(  1, 0 ),
+          CardinalDir.Down  => new Coord2(  0, -1 ),
+          CardinalDir.Left  => new Coord2( -1, 0 ),
+          _                 => Coord2.zero
+      };
 
-         switch (direction) {
-
-            case CardinalDir.Up:    { return new Coord2(  0,  1 ); }
-            case CardinalDir.Right: { return new Coord2(  1,  0 ); }
-            case CardinalDir.Down:  { return new Coord2(  0, -1 ); }
-            case CardinalDir.Left:  { return new Coord2( -1,  0 ); }
-         }
-         return Coord2.zero;
-      }
-      
       /// <summary>Returns the CardinalAxis of the given direction.</summary>
-      public static CardinalAxis Axis( this CardinalDir direction ) {
+      public static CardinalAxis Axis( this CardinalDir direction )
+          => direction == CardinalDir.Up || direction == CardinalDir.Down ? CardinalAxis.Vertical
+                                                                          : CardinalAxis.Horizontal;
 
-         if (direction == CardinalDir.Up || direction == CardinalDir.Down) { return CardinalAxis.Vertical; }
-         return CardinalAxis.Horizontal;
-      }
-      
       /// <summary>Returns the opposite of the given direction.</summary>
-      public static CardinalDir Reverse( this CardinalDir direction ) {
-         return (CardinalDir) (((int) direction + 2) % 4);
-      }
-      
+      public static CardinalDir Reverse( this CardinalDir direction ) => (CardinalDir) (((int) direction + 2) % 4);
+
       /// <summary>Returns the next direction clockwise from the given direction.</summary>
-      public static CardinalDir NextClockwise( this CardinalDir direction ) {
-         return (CardinalDir) (((int) direction + 3) % 4);
-      }
-      
+      public static CardinalDir NextClockwise( this CardinalDir direction )
+          => (CardinalDir) (((int) direction + 3) % 4);
+
       /// <summary>Returns the next direction anticlockwise from the given direction.</summary>
-      public static CardinalDir NextAnticlockwise( this CardinalDir direction ) {
-         return (CardinalDir) (((int) direction + 1) % 4);
-      }
-      
+      public static CardinalDir NextAnticlockwise( this CardinalDir direction )
+          => (CardinalDir) (((int) direction + 1) % 4);
+
       /// <summary>Returns this direction relative to the given forward direction.</summary>
-      public static CardinalDir RelativeTo( this CardinalDir dir, CardinalDir forward ) {
-         return (CardinalDir) (((int) dir - (int) forward).Ring( 4, 0 ));
-      }
-      
+      public static CardinalDir RelativeTo( this CardinalDir dir, CardinalDir forward )
+          => (CardinalDir) Mathf.Repeat( (int) dir - (int) forward, 4 );
+
       /// <summary>Returns true if the other direction is immediately clockwise or counterclockwise of this one.</summary>
-      public static bool IsAdjacent( this CardinalDir direction, CardinalDir other ) {
-         return direction.Axis() != other.Axis();
-      }
-      
+      public static bool IsAdjacent( this CardinalDir direction, CardinalDir other )
+          => direction.Axis() != other.Axis();
+
       /// <summary>Returns true if the other direction is opposite to this one this one.</summary>
-      public static bool IsOpposite( this CardinalDir direction, CardinalDir other ) {
-         return direction != other && direction.Axis() == other.Axis();
-      }
-   }
-
-   [Serializable]
-   public class NullableCardinalDir: SerializedNullable< CardinalDir > {
-
-      public NullableCardinalDir( CardinalDir  dir ): base( dir ) { }
-      public NullableCardinalDir( CardinalDir? dir ): base( dir ) { }
-      public NullableCardinalDir(): base() { }
-      public static implicit operator NullableCardinalDir( CardinalDir dir ) { return new NullableCardinalDir( dir ); }
+      public static bool IsOpposite( this CardinalDir direction, CardinalDir other )
+          => direction != other && direction.Axis() == other.Axis();
    }
 }

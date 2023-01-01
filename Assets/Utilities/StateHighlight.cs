@@ -69,7 +69,7 @@ namespace Lx {
             prev = curr;
             curr = states.First( s => s.state.Equals( state ) );
             transition.Start();
-            if (graphic && prev != null && prev.invisible && !curr.invisible) { graphic.enabled = true; }
+            if (graphic && prev is { invisible: true } && !curr.invisible) { graphic.enabled = true; }
          }
 
          if (transition.dormant) {
@@ -119,10 +119,10 @@ namespace Lx {
       float   _alpha;
       Vector2 _position;
 
-      public void Initialise( T state, Color color ) {
+      public void Initialise( T initState, Color initColor ) {
 
-         this.state = state;
-         colorA = colorB = color;
+         state = initState;
+         colorA = colorB = initColor;
       }
 
       void Update() {

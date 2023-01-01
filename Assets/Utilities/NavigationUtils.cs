@@ -1,6 +1,7 @@
 ﻿// Unity UI navigation utility methods
 // by Lexa Francis, 2014-2017
 
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -9,189 +10,193 @@ using System.Linq;
 
 namespace Lx {
 
-   public static partial class Utils {
+    public static partial class Utils {
 
-      public static void SetNavigationSequence( Transform parent, bool horizontal, bool keepCurrent = true,
-                                                bool includeInactive = false ) {
+        public static void SetNavigationSequence( Transform parent, bool horizontal, bool keepCurrent = true,
+                                                  bool      includeInactive = false ) {
 
-         Selectable prev = null;
+            Selectable prev = null;
 
-         foreach (Transform child in parent) {
+            foreach (Transform child in parent) {
 
-            Selectable s = child.GetComponent< Selectable >();
-            if (!s || !s.gameObject.activeSelf) { continue; }
-            if (!keepCurrent) { s.SetNavigation( null, null, null, null ); }
-            Navigation sNavigation = s.navigation;
+                Selectable s = child.GetComponent< Selectable >();
+                if (!s || !s.gameObject.activeSelf) { continue; }
+                if (!keepCurrent) { s.SetNavigation( null, null, null, null ); }
+                Navigation sNavigation = s.navigation;
 
-            if (prev) {
+                if (prev) {
 
-               Navigation prevNavigation = prev.navigation;
+                    Navigation prevNavigation = prev.navigation;
 
-               if (horizontal) {
+                    if (horizontal) {
 
-                  prevNavigation.selectOnRight = s;
-                  sNavigation.selectOnLeft     = prev;
-               }
-               else {
-                  prevNavigation.selectOnDown = s;
-                  sNavigation.selectOnUp      = prev;
-               }
+                        prevNavigation.selectOnRight = s;
+                        sNavigation.selectOnLeft     = prev;
+                    }
+                    else {
+                        prevNavigation.selectOnDown = s;
+                        sNavigation.selectOnUp      = prev;
+                    }
 
-               prev.navigation = prevNavigation;
-               s.navigation    = sNavigation;
+                    prev.navigation = prevNavigation;
+                    s.navigation    = sNavigation;
+                }
+                
+                prev = s;
             }
-            prev = s;
-         }
-      }
+        }
 
-      public static void SetNavigationSequence( IEnumerable< Selectable > selectables, bool horizontal,
-                                                bool keepCurrent = true ) {
+        public static void SetNavigationSequence( IEnumerable< Selectable > selectables, bool horizontal,
+                                                  bool                      keepCurrent = true ) {
 
-         Selectable prev = null;
+            Selectable prev = null;
 
-         foreach (Selectable s in selectables) {
+            foreach (Selectable s in selectables) {
 
-            if (!keepCurrent) { s.SetNavigation( null, null, null, null ); }
-            Navigation sNavigation = s.navigation;
+                if (!keepCurrent) { s.SetNavigation( null, null, null, null ); }
+                Navigation sNavigation = s.navigation;
 
-            if (prev) {
+                if (prev) {
 
-               Navigation prevNavigation = prev.navigation;
+                    Navigation prevNavigation = prev.navigation;
 
-               if (horizontal) {
+                    if (horizontal) {
 
-                  prevNavigation.selectOnRight = s;
-                  sNavigation.selectOnLeft     = prev;
-               }
-               else {
-                  prevNavigation.selectOnDown = s;
-                  sNavigation.selectOnUp      = prev;
-               }
+                        prevNavigation.selectOnRight = s;
+                        sNavigation.selectOnLeft     = prev;
+                    }
+                    else {
+                        prevNavigation.selectOnDown = s;
+                        sNavigation.selectOnUp      = prev;
+                    }
 
-               prev.navigation = prevNavigation;
-               s.navigation    = sNavigation;
+                    prev.navigation = prevNavigation;
+                    s.navigation    = sNavigation;
+                }
+                
+                prev = s;
             }
-            prev = s;
-         }
-      }
+        }
 
-      public static void JoinNavigationSequences( IEnumerable< Selectable > selectablesA,
-                                                  IEnumerable< Selectable > selectablesB, bool horizontal ) {
+        public static void JoinNavigationSequences( ICollection< Selectable > selectablesA,
+                                                    ICollection< Selectable > selectablesB, bool horizontal ) {
 
-         int highestA = selectablesA.Count() - 1,
-             highestB = selectablesB.Count() - 1;
+            int highestA = selectablesA.Count - 1,
+                highestB = selectablesB.Count - 1;
 
-         for (int i = 0; i <= highestA; i++) {
+            for (int i = 0; i <= highestA; i++) {
 
-            Selectable target
-               = selectablesB.ElementAt( Mathf.Clamp( Mathf.RoundToInt( i * (highestB / (float) highestA) ),
-                                                      0, highestB ) );
-            selectablesA.ElementAt( i ).SetNavigation( null, horizontal ? null : target, null, horizontal ? target : null );
-         }
-
-         for (int i = 0; i <= highestB; i++) {
-
-            Selectable target
-               = selectablesA.ElementAt( Mathf.Clamp( Mathf.RoundToInt( i * (highestA / (float) highestB) ),
-                                                      0, highestA ) );
-            selectablesB.ElementAt( i ).SetNavigation( horizontal ? null : target, null, horizontal ? target : null, null );
-         }
-      }
-
-      public static void SetNavigationGrid( Transform parent, int numColumns ) {
-
-         for (int i = 0; i < parent.childCount; i++) {
-
-            Selectable selectable = parent.GetChild( i ).GetComponentInChildren< Selectable >();
-
-            if (i > 0) {
-
-               Selectable prevButton = parent.GetChild( i - 1 ).GetComponentInChildren< Selectable >();
-               prevButton.SetNavigation( null, null, null, selectable );
-               selectable.SetNavigation( null, null, prevButton, null );
+                Selectable target
+                    = selectablesB.ElementAt( Mathf.Clamp( Mathf.RoundToInt( i * (highestB / (float) highestA) ),
+                                                           0, highestB ) );
+                selectablesA.ElementAt( i )
+                            .SetNavigation( null, horizontal ? null : target, null, horizontal ? target : null );
             }
-            if (i >= numColumns) {
 
-               Selectable aboveButton = parent.GetChild( i - numColumns ).GetComponentInChildren< Selectable >();
-               aboveButton.SetNavigation( null, selectable, null, null );
-               selectable.SetNavigation( aboveButton, null, null, null );
+            for (int i = 0; i <= highestB; i++) {
+
+                Selectable target
+                    = selectablesA.ElementAt( Mathf.Clamp( Mathf.RoundToInt( i * (highestA / (float) highestB) ),
+                                                           0, highestA ) );
+                selectablesB.ElementAt( i )
+                            .SetNavigation( horizontal ? null : target, null, horizontal ? target : null, null );
             }
-         }
-      }
+        }
 
-      public static void SetNavigation( this Selectable selectable,
-                                        Selectable up, Selectable down, Selectable left, Selectable right,
-                                        bool keepCurrent = true ) {
+        public static void SetNavigationGrid( Transform parent, int numColumns ) {
 
-         Navigation navigation = selectable.navigation;
+            for (int i = 0; i < parent.childCount; i++) {
 
-         if (up    != null || !keepCurrent) { navigation.selectOnUp    = up;    }
-         if (down  != null || !keepCurrent) { navigation.selectOnDown  = down;  }
-         if (left  != null || !keepCurrent) { navigation.selectOnLeft  = left;  }
-         if (right != null || !keepCurrent) { navigation.selectOnRight = right; }
+                Selectable selectable = parent.GetChild( i ).GetComponentInChildren< Selectable >();
 
-         selectable.navigation = navigation;
-      }
+                if (i > 0) {
 
-      public static void SetNavigationMode( this Selectable selectable, Navigation.Mode mode ) {
+                    Selectable prevButton = parent.GetChild( i - 1 ).GetComponentInChildren< Selectable >();
+                    prevButton.SetNavigation( null, null, null, selectable );
+                    selectable.SetNavigation( null, null, prevButton, null );
+                }
+                
+                if (i >= numColumns) {
 
-         Navigation navigation = selectable.navigation;
-         navigation.mode       = mode;
-         selectable.navigation = navigation;
-      }
-
-      static Selectable ClosestSelectableForDirection( Vector2 origin, Vector2 direction,
-                                                       IEnumerable< KeyValuePair< Selectable, RectTransform > > others ) {
-
-         var currentClosest = others.First();
-
-         foreach (var other in others) {
-            if (Vector2.Angle( other.Value.anchoredPosition - origin, direction )
-                < Vector2.Angle( currentClosest.Value.anchoredPosition - origin, direction )) {
-               currentClosest = other;
+                    Selectable aboveButton = parent.GetChild( i - numColumns ).GetComponentInChildren< Selectable >();
+                    aboveButton.SetNavigation( null, selectable, null, null );
+                    selectable.SetNavigation( aboveButton, null, null, null );
+                }
             }
-         }
-         return Vector2.Angle( currentClosest.Value.anchoredPosition - origin, direction ) < 90.0f ? currentClosest.Key
-                                                                                                   : null;
-      }
+        }
 
-      public static void SetFreeformNavigation( Dictionary< Selectable, RectTransform > elements ) {
+        public static void SetNavigation( this Selectable selectable,
+                                          Selectable      up, Selectable down, Selectable left, Selectable right,
+                                          bool            keepCurrent = true ) {
 
-         if (elements.Count < 2) {
+            Navigation navigation = selectable.navigation;
 
-            Debug.LogWarning( "Can't set freeform navigation for less than two elements." );
-            return;
-         }
+            if (up    != null || !keepCurrent) { navigation.selectOnUp    = up;    }
+            if (down  != null || !keepCurrent) { navigation.selectOnDown  = down;  }
+            if (left  != null || !keepCurrent) { navigation.selectOnLeft  = left;  }
+            if (right != null || !keepCurrent) { navigation.selectOnRight = right; }
 
-         foreach (var element in elements) {
+            selectable.navigation = navigation;
+        }
 
-            Navigation navigation    = element.Key.navigation;
-            Vector2    thisPos       = element.Value.anchoredPosition;
-            var        otherElements = elements.Where( e => e.Key != element.Key );
-            navigation.selectOnUp    = ClosestSelectableForDirection( thisPos, Vector2.up,    otherElements );
-            navigation.selectOnRight = ClosestSelectableForDirection( thisPos, Vector2.right, otherElements );
-            navigation.selectOnDown  = ClosestSelectableForDirection( thisPos, Vector2.down,  otherElements );
-            navigation.selectOnLeft  = ClosestSelectableForDirection( thisPos, Vector2.left,  otherElements );
-            element.Key.navigation   = navigation;
-         }
-      }
+        public static void SetNavigationMode( this Selectable selectable, Navigation.Mode mode ) {
 
-      public static bool CanNavigateTo( this Selectable self, Selectable other ) {
+            Navigation navigation = selectable.navigation;
+            navigation.mode       = mode;
+            selectable.navigation = navigation;
+        }
 
-         if (self.navigation.selectOnUp    == other) { return true; }
-         if (self.navigation.selectOnRight == other) { return true; }
-         if (self.navigation.selectOnDown  == other) { return true; }
-         if (self.navigation.selectOnLeft  == other) { return true; }
-         return false;
-      }
+        static Selectable ClosestSelectableForDirection( Vector2 origin, Vector2 direction,
+                                                     ICollection< KeyValuePair< Selectable, RectTransform > > others ) {
 
-      public static Selectable TargetForMoveDir( this Navigation navigation, MoveDirection direction ) {
+            var currentClosest = others.First();
 
-         return direction.Map( MoveDirection.Up,    navigation.selectOnUp )
-                         .Map( MoveDirection.Right, navigation.selectOnRight )
-                         .Map( MoveDirection.Down,  navigation.selectOnDown )
-                         .Map( MoveDirection.Left,  navigation.selectOnLeft );
-      }
+            foreach (var other in others) {
+                if (Vector2.Angle( other.Value.anchoredPosition - origin,            direction )
+                    < Vector2.Angle( currentClosest.Value.anchoredPosition - origin, direction )) {
+                    currentClosest = other;
+                }
+            }
+            
+            return Vector2.Angle( currentClosest.Value.anchoredPosition - origin, direction ) < 90.0f
+                       ? currentClosest.Key : null;
+        }
 
-   }
+        public static void SetFreeformNavigation( Dictionary< Selectable, RectTransform > elements ) {
+
+            if (elements.Count < 2) {
+
+                Debug.LogWarning( "Can't set freeform navigation for less than two elements." );
+                return;
+            }
+
+            foreach (var element in elements) {
+
+                Navigation navigation    = element.Key.navigation;
+                Vector2    thisPos       = element.Value.anchoredPosition;
+                var        otherElements = elements.Where( e => e.Key != element.Key ).ToList();
+                navigation.selectOnUp    = ClosestSelectableForDirection( thisPos, Vector2.up,    otherElements );
+                navigation.selectOnRight = ClosestSelectableForDirection( thisPos, Vector2.right, otherElements );
+                navigation.selectOnDown  = ClosestSelectableForDirection( thisPos, Vector2.down,  otherElements );
+                navigation.selectOnLeft  = ClosestSelectableForDirection( thisPos, Vector2.left,  otherElements );
+                element.Key.navigation   = navigation;
+            }
+        }
+
+        public static bool CanNavigateTo( this Selectable self, Selectable other )
+            => self.navigation.selectOnUp    == other
+            || self.navigation.selectOnRight == other
+            || self.navigation.selectOnDown  == other
+            || self.navigation.selectOnLeft  == other;
+
+        public static Selectable TargetForMoveDir( this Navigation navigation, MoveDirection direction )
+            => direction switch {
+                MoveDirection.Up    => navigation.selectOnUp,
+                MoveDirection.Right => navigation.selectOnRight,
+                MoveDirection.Down  => navigation.selectOnDown,
+                MoveDirection.Left  => navigation.selectOnLeft,
+                MoveDirection.None  => throw new ArgumentOutOfRangeException( nameof( direction ), direction, null ),
+                _                   => throw new ArgumentOutOfRangeException( nameof( direction ), direction, null )
+            };
+    }
 }

@@ -13,26 +13,27 @@ namespace Lx {
 
       public static string NullChainCheck( string n, object obj, params string[] invocations ) {
 
-         string str     = n.Bold() + " invocation chain:\nstarting with:" + obj.ToString();
+         string str     = $"{n.Bold()} invocation chain:\nstarting with:{obj}";
          object current = obj;
 
          foreach (string invocation in invocations) {
 
             if (current == null) {
 
-               str += "\n at invocation '" + invocation + "'; current is null; breaking...";
+               str += $"\n at invocation '{invocation}'; current is null; breaking...";
                break;
             }
 
-            Type currType     = current.GetType();
-            var  bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+            Type               currType     = current.GetType();
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
+                                            | BindingFlags.Instance | BindingFlags.Static;
 
             FieldInfo field = currType.GetField( invocation, bindingFlags );
 
             if (field != null) {
 
-               current = field.GetValue( current );
-               str    += "\n" + (invocation + " (field): ").Bold() + (current != null ? current.ToString() : "null");
+               current =  field.GetValue( current );
+               str     += $"\n{(invocation + " (field): ").Bold()}{(current != null ? current.ToString() : "null")}";
                continue;
             }
 
@@ -40,8 +41,8 @@ namespace Lx {
 
             if (method != null) {
 
-               current = method.Invoke( current, new object[] { } );
-               str    += "\n" + (invocation + " (method): ").Bold() + (current != null ? current.ToString() : "null");
+               current =  method.Invoke( current, new object[] { } );
+               str     += $"\n{(invocation + " (method): ").Bold()}{(current != null ? current.ToString() : "null")}";
                continue;
             }
 
@@ -49,33 +50,33 @@ namespace Lx {
 
             if (property != null) {
 
-               current = property.GetValue( current, null );
-               str += "\n" + (invocation + " (property): ").Bold() + (current != null ? current.ToString() : "null");
+               current =  property.GetValue( current, null );
+               str     += $"\n{(invocation + " (property): ").Bold()}{(current != null ? current.ToString() : "null")}";
                continue;
             }
-            str += "\n at invocation '" + invocation + "'; no method or property found on type '"
-                     + currType.ToString() + "'; breaking...";
+            
+            str += $"\n at invocation '{invocation}'; no method or property found on type '{currType}'; breaking...";
             break;
          }
+         
          return str;
       }
 
       public class SwitchMap< Tkey, Tresult > {
 
          Tkey    input;
-         Tresult current;
 
          internal SwitchMap( Tkey input ) { this.input = input; }
 
-         public static implicit operator Tresult( SwitchMap< Tkey, Tresult > map ) { return map.current; }
+         public static implicit operator Tresult( SwitchMap< Tkey, Tresult > map ) { return map.Value; }
 
          public SwitchMap< Tkey, Tresult > Map( Tkey key, Tresult output ) {
 
-            if (input.Equals( key )) { current = output; }
+            if (input.Equals( key )) { Value = output; }
             return this;
          }
 
-         public Tresult Value { get { return current; } }
+         public Tresult Value { get; private set; }
       }
 
       public static SwitchMap< T, U > Map< T, U >( this T input, T key, U output ) {
@@ -93,7 +94,7 @@ namespace Lx {
          return operation( source );
       }
 
-      static int[] primes = { 17, 23, 31, 37, 43, 19, 29, 41, 59, 73 };
+      static readonly int[] primes = { 17, 23, 31, 37, 43, 19, 29, 41, 59, 73 };
 
       public static int IntHash( params int[] values ) {
 

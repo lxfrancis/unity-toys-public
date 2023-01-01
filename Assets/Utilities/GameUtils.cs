@@ -4,11 +4,16 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System;
+using System.Collections;
+using System.Diagnostics;
+using System.Text;
+using UnityEditor;
+using Debug = UnityEngine.Debug;
+using Object = UnityEngine.Object;
 
 namespace Lx {
 
@@ -81,71 +86,52 @@ namespace Lx {
          return "TransformData { position: " + position + ", rotation: " + rotation + ", scale: " + scale + " }";
       }
 
-      public override bool Equals( object obj ) {
-         
-         if (!(obj is TransformData)) { return false; }
-         TransformData other = (TransformData) obj;
-         return position == other.position && rotation == other.rotation && scale == other.scale;
-      }
+      public override bool Equals( object obj ) =>
+         obj is TransformData other && (position == other.position && rotation == other.rotation && scale == other.scale);
 
-      public static bool operator ==( TransformData a, TransformData b ) { return a.Equals( b ); }
+      public static bool operator ==( TransformData a, TransformData b ) => a.Equals( b );
 
-      public static bool operator !=( TransformData a, TransformData b ) { return !a.Equals( b ); }
+      public static bool operator !=( TransformData a, TransformData b ) => !a.Equals( b );
    }
+
 
    public static partial class Utils {
 
-      /// <summary>The longest startLifetime.constantMax of all child particle systems.</summary>
-      public static float LongestChildParticleEffect( Transform transform, bool include_inactive_children=true ) {
+       public static List< Transform > Children( this Transform transform ) {
 
-         return transform.GetComponentsInChildren< ParticleSystem >( include_inactive_children )
-                         .Max( ps => ps.main.startLifetime.constantMax );
-      }
+           List< Transform > list = new List< Transform >( transform.childCount );
+           
+           for (int i = 0; i < transform.childCount; i++) { list.Add( transform.GetChild( i ) ); }
 
-      public static void ShowCachedParticleEffect( GameObject effect, Vector3 position, Quaternion rotation,
-                                                         MonoBehaviour script ) {
+           return list;
+       }
 
-         effect.SetActive( true );
-         effect.transform.position = position;
-         effect.transform.rotation = rotation;
+       /// <summary>The longest startLifetime.constantMax of all child particle systems.</summary>
+      // public static float LongestChildParticleEffect( Transform transform, bool include_inactive_children=true ) {
+      //
+      //    return transform.GetComponentsInChildren< ParticleSystem >( include_inactive_children )
+      //                    .Max( ps => ps.main.startLifetime.constantMax );
+      // }
 
-         foreach (ParticleSystem ps in effect.GetComponentsInChildren< ParticleSystem >()) { ps.Play(); }
-
-         Lerp( script, effect.GetComponentsInChildren< ParticleSystem >().Max( ps => ps.main.startLifetime.constantMax ), null,
-               () => effect.SetActive( false ) );
-      }
-
-      static IEnumerator LerpCoroutine( float duration, Action< float > lerpAction, Action completion, bool realTime ) {
-
-         float startTime = realTime ? Time.unscaledTime : Time.time;
-         yield return null;
-
-         while (true) {
-            
-            float time = realTime ? Time.unscaledTime : Time.time;
-            if (lerpAction != null) { lerpAction( Mathf.Clamp01( time / duration ) ); }
-
-            if (startTime + duration < time) {
-               
-               if (completion != null) { completion(); }
-               yield break;
-            }
-            yield return null;
-         }
-      }
-
-      public static void Lerp( MonoBehaviour behaviour, float duration, Action< float > lerpAction, Action completion,
-                              bool realTime=false ) {
-
-         behaviour.StartCoroutine( LerpCoroutine( duration, lerpAction, completion, realTime ) );
-      }
+      // public static void ShowCachedParticleEffect( GameObject effect, Vector3 position, Quaternion rotation,
+      //                                                    MonoBehaviour script ) {
+      //
+      //    effect.SetActive( true );
+      //    effect.transform.position = position;
+      //    effect.transform.rotation = rotation;
+      //
+      //    foreach (ParticleSystem ps in effect.GetComponentsInChildren< ParticleSystem >()) { ps.Play(); }
+      //
+      //    Lerp( script, effect.GetComponentsInChildren< ParticleSystem >().Max( ps => ps.main.startLifetime.constantMax ), null,
+      //          () => effect.SetActive( false ) );
+      // }
 
       public static void BulletTime( MonoBehaviour behaviour, float slow_timescale, float duration, bool relative=false,
-                                    bool revert_to_1=true ) {
+                                     bool revert_to_1=true ) {
          
          float prev_timescale = Time.timeScale;
          Time.timeScale       = relative ? Time.timeScale * slow_timescale : slow_timescale;
-         Lerp( behaviour, duration, null, () => Time.timeScale = revert_to_1 ? 1.0f : prev_timescale, true );
+         CoroutineUtils.Delay( () => Time.timeScale = revert_to_1 ? 1.0f : prev_timescale, duration, behaviour );
       }
       
       /// <summary>Perform an action on all materials on the given renderer matching the given name.</summary>
@@ -210,15 +196,17 @@ namespace Lx {
       public static bool Down   ( this KeyCode key ) { return Input.GetKeyDown( key ); }
       public static bool Pressed( this KeyCode key ) { return Input.GetKey    ( key ); }
       public static bool Up     ( this KeyCode key ) { return Input.GetKeyUp  ( key ); }
-      
-      /// <summary>Returns the UnityEngine.Object in the collection matching the given name.</summary>
-      /// <param name="keyify">Ignore whitespace and case in object names.</param>
-      public static T MatchingName< T >( this IEnumerable< T > items, string name, bool keyify=true )
-                              where T: UnityEngine.Object {
 
-         if (items == null || items.Count() == 0) { return null; }
-         if (keyify) { return items.FirstOrDefault( item => item && item.name.ToKey() == name.ToKey() ); }
-         return items.FirstOrDefault( item => item && item.name == name );
+      /// <summary>Returns the UnityEngine.Object in the collection matching the given name.</summary>
+      /// <param name="name">Name to look for.</param>
+      /// <param name="keyify">Ignore whitespace and case in object names.</param>
+      /// <param name="items">Items to check.</param>
+      public static T MatchingName< T >( this IEnumerable< T > items, string name, bool keyify=true )
+                              where T: Object {
+
+          IEnumerable< T > enumerable = items.ToList();
+          if (!enumerable.Any()) { return null; }
+         return keyify ? enumerable.FirstOrDefault( item => item && item.name.ToKey() == name.ToKey() ) : enumerable.FirstOrDefault( item => item && item.name == name );
       }
 
       /// <summary>Returns a list of all subdirectories in your project's resources directory.</summary>
@@ -230,7 +218,7 @@ namespace Lx {
       }
       
       /// <summary>Pass in a list of resources subdirectories and find any resource by name in all paths.</summary>
-      public static T FindResource< T >( string name, string[] subdirectories, bool verbose=false ) where T: UnityEngine.Object {
+      public static T FindResource< T >( string name, string[] subdirectories, bool verbose=false ) where T: Object {
 
          if (subdirectories == null || subdirectories.Length == 0) {
 
@@ -238,14 +226,12 @@ namespace Lx {
             return null;
          }
 
-         T result = null;
-
          foreach (string subdirectory in subdirectories) {
 
             if (verbose) {
                Debug.Log( "Attempting to load " + typeof( T ).Name + " at " + subdirectory + "/" + name );
             }
-            result = Resources.Load< T >( subdirectory + "/" + name );
+            var result = Resources.Load< T >( subdirectory + "/" + name );
             if (result != null) {
                if (verbose) { Debug.Log( "Found " + typeof( T ).Name + " at " + subdirectory + "/" + name ); }
                return result;
@@ -297,24 +283,6 @@ namespace Lx {
          return Time.realtimeSinceStartup;
       }
       
-      /// <summary>Performs the given action when condition returns true.</summary>
-      public static void DoWhenTrue( MonoBehaviour behaviour, Func< bool > condition, Action action,
-                                     Func< bool > abort_condition=null ) {
-         
-         behaviour.StartCoroutine( WaitForCondition( action, condition, abort_condition ) );
-      }
-      
-      static IEnumerator WaitForCondition( Action action, Func< bool > condition,
-                                           Func< bool > abort_condition=null ) {
-
-         while (true) {
-
-            if (abort_condition != null && abort_condition()) { yield break; }
-            if (!condition()) { yield return null; } else { break; }
-         }
-         action();
-      }
-      
       /// <summary>Returns a function which returns true after the given period of time has elapsed.</summary>
       public static Func< bool > TrueAfterSeconds( float seconds, bool unscaled_time=false ) {
 
@@ -331,37 +299,100 @@ namespace Lx {
          return null;
       }
       
+      /// <summary>Finds all child components at any depth of a given type whose names contain the given name.</summary>
+      public static List< T > FindComponents< T >( this Component component, string name ) where T: Component {
+
+         List< T > components = new List< T >();
+         
+         foreach (T c in component.GetComponentsInChildren< T >( true )) {
+            
+            if (c.name.ToKey().Contains( name.ToKey() )) { components.Add( c ); }
+         }
+         
+         return components;
+      }
+      
       /// <summary>Finds the highest ancestor of the given type.</summary>
       public static T HighestAncestorComponent< T >( this Component component ) where T: Component {
 
-         Transform parent  = component.transform.parent;
+         Transform tf      = component.transform;
          T         highest = null;
 
-         while (parent) {
+         while (tf) {
 
-            T canvas = parent.GetComponent< T >();
-            if (canvas) { highest = canvas; }
-            parent = parent.parent;
+            T comp = tf.GetComponent< T >();
+            if (comp) { highest = comp; }
+            tf = tf.parent;
          }
 
          return highest;
       }
 
-      public static string HierarchyString( this Transform transform ) {
+      public static string Path( this Transform transform ) {
 
          if (!transform.parent) { return transform.name; }
-         return transform.parent.HierarchyString() + "/" + transform.name;
+         return transform.parent.Path() + "/" + transform.name;
       }
       
-      /// <summary>Destroy the associated GameObject if the object is a component, or else just destroy the object.</summary>
-      public static void DestroyGameObject( this UnityEngine.Object o ) {
+      public static T Single< T >( this IEnumerable set ) => set.OfType< T >().SingleOrDefault();
+      public static T First < T >( this IEnumerable set ) => set.OfType< T >().FirstOrDefault();
 
-         if (!o) { return; }
-         if (o.GetType().IsSubclassOf( typeof( Component ) )) {
-            UnityEngine.Object.Destroy( (o as Component).gameObject );
-         } else {
-            UnityEngine.Object.Destroy( o );
+      // public static T Single< T, U >( this U[] collection ) where T: U => (T) collection.Single( item => item is T );
+
+      #if UNITY_EDITOR
+      public static void ContextLog( string message="", MessageType messageType=MessageType.None, Object context=null,
+                                     int wrapperMethodCount=0, params object[] args ) {
+         
+         if (Application.isEditor) {
+
+            StringBuilder sb = new StringBuilder();
+            
+            var trace  = new StackTrace();
+            var frame  = trace.GetFrame( 1 + wrapperMethodCount );
+            var method = frame.GetMethod();
+
+            sb.Append( $"{method.DeclaringType?.Name}.{method.Name}()" );
+
+            var paramInfos = method.GetParameters();
+
+            for (int i = 0; i < paramInfos.Length && i < args.Length; i++) {
+               sb.Append( $"; {paramInfos[ i ].Name}: {args[ i ]}" );
+            }
+
+            if (!message.IsNullOrWhitespace()) { sb.Append( $"; {message}" ); }
+
+            message = sb.ToString();
          }
+         
+         
+         switch (messageType) {
+            case MessageType.None:
+            case MessageType.Info:    { Debug.Log       ( message, context ); } break;
+            case MessageType.Warning: { Debug.LogWarning( message, context ); } break;
+            case MessageType.Error:   { Debug.LogError  ( message, context ); } break;
+            default: { throw new ArgumentOutOfRangeException( nameof( messageType ), messageType, null ); }
+         }
+      }
+      #endif
+      
+      /// <summary>Destroy the associated GameObject if the object is a component, or else just destroy the object.</summary>
+      public static void DestroyGameObject( this Object o ) {
+
+          if (!o) { return; }
+          Object.Destroy( o is Component c ? c.gameObject : o );
+      }
+
+      /// <summary>
+      /// Stops a coroutine that was started on a given behaviour, and sets the variable to null. Just a space-saver.
+      /// </summary>
+      /// <param name="behaviour"></param>
+      /// <param name="routine"></param>
+      public static void NeutraliseCoroutine( MonoBehaviour behaviour, ref Coroutine routine ) {
+         
+         if (routine == null) { return; }
+        
+         behaviour.StopCoroutine( routine );
+         routine = null;
       }
 
       public static Transform RefreshCollectionChild( Transform transform, string childName ) {
@@ -380,11 +411,23 @@ namespace Lx {
          return child;
       }
 
+      public static void SetActive( bool active, params Object[] objects ) {
+
+         foreach (var obj in objects) {
+
+            switch (obj) {
+               
+               case GameObject go: { go.SetActive( active ); } break;
+               case Component com: { com.gameObject.SetActive( active ); } break;
+               default: { Debug.LogError( $"{obj} is not a gameobject or component", obj ); } break;
+            }
+         }
+      }
+
       public static void DestroyAllChildren( Transform transform ) {
 
-         List< Transform > children = new List< Transform >();
-         foreach (Transform child in transform) { children.Add( child ); }
-         foreach (Transform child in children) { UnityEngine.Object.DestroyImmediate( child.gameObject ); }
+         List< Transform > children = transform.Cast< Transform >().ToList();
+         foreach (Transform child in children) { Object.DestroyImmediate( child.gameObject ); }
       }
       
       /// <summary>Set the alpha value of this graphic's color.</summary>
@@ -411,6 +454,51 @@ namespace Lx {
          Color original = graphic.color;
          color.a        = original.a;
          graphic.color  = color;
+      }
+
+      public static string Color32ToHTMLStringRGB( Color32 color ) {
+
+         var sb = new System.Text.StringBuilder();
+         sb.Append( "#" );
+         sb.Append( color.r.ToString("X2") );
+         sb.Append( color.g.ToString("X2") );
+         sb.Append( color.b.ToString("X2") );
+         return sb.ToString();
+      }
+
+      public static string Color32ToHTMLStringRGBA( Color32 color ) {
+
+         var sb = new System.Text.StringBuilder();
+         sb.Append( "#" );
+         sb.Append( color.r.ToString("X2") );
+         sb.Append( color.g.ToString("X2") );
+         sb.Append( color.b.ToString("X2") );
+         sb.Append( color.a.ToString("X2") );
+         return sb.ToString();
+      }
+
+      public static Color32 HTMLStringToColor32( string colorString ) {
+
+         if (!colorString.StartsWith( "#" ) || colorString.Length < 7) { return default( Color32 ); }
+
+         Color32 color = new Color32( 0, 0, 0, 255 );
+
+         try {
+            color.r = byte.Parse( colorString.Substring( 1, 2 ), System.Globalization.NumberStyles.HexNumber );
+            color.g = byte.Parse( colorString.Substring( 3, 2 ), System.Globalization.NumberStyles.HexNumber );
+            color.b = byte.Parse( colorString.Substring( 5, 2 ), System.Globalization.NumberStyles.HexNumber );
+            
+            if (colorString.Length >= 9) {
+               color.a = byte.Parse( colorString.Substring( 7, 2 ), System.Globalization.NumberStyles.HexNumber );
+            }
+         }
+         catch (Exception) {
+
+            Debug.LogWarning( "Couldn't parse HTML color string: " + colorString );
+            return new Color32( 0, 0, 0, 255 );
+         }
+
+         return color;
       }
       
       /// <summary>Create a Texture2D from a Color array.</summary>
@@ -442,8 +530,8 @@ namespace Lx {
 
          if (destroy) {
 
-            if (Application.isEditor && !Application.isPlaying) { UnityEngine.Object.DestroyImmediate( texture ); }
-            else { UnityEngine.Object.Destroy( texture ); }
+            if (Application.isEditor && !Application.isPlaying) { Object.DestroyImmediate( texture ); }
+            else { Object.Destroy( texture ); }
          }
       }
       

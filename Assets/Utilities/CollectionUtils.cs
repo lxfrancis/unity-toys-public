@@ -4,7 +4,13 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UnusedType.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace Lx {
 
@@ -12,15 +18,17 @@ namespace Lx {
    public class LaxStringDict< T >: Dictionary< string, T >, IDictionary< string, T > {
 
       public new T this[ string key ] {
-         get { return base[ key.ToKey() ]; }
-         set { base[ key.ToKey() ] = value; }
+         get => base[ key.ToKey() ];
+         set => base[ key.ToKey() ] = value;
       }
 
-      public new void Add( string key, T value ) { base.Add( key.ToKey(), value ); }
-      public new void Remove( string key ) { base.Remove( key.ToKey() ); }
-      public new bool ContainsKey( string key ) { return base.ContainsKey( key.ToKey() ); }
+      public new void Add( string key, T value ) => base.Add( key.ToKey(), value );
+      
+      public new void Remove( string key ) => base.Remove( key.ToKey() );
+      
+      public new bool ContainsKey( string key ) => base.ContainsKey( key.ToKey() );
 
-      public LaxStringDict(): base() { }
+      public LaxStringDict() { }
 
       public LaxStringDict( IDictionary< string, T > dict ) {
          foreach (var entry in dict.Keys) { this[ entry ] = dict[ entry ]; }
@@ -36,20 +44,16 @@ namespace Lx {
             if (!ContainsKey( key )) { this[ key ] = 0; }
             return base[ key ];
          }
-         set {
-            base[ key ] = value;
-         }
+         set => base[ key ] = value;
       }
 
-      public override string ToString() { return ToString( false ); }
+      public override string ToString() => ToString( false );
 
-      public string ToString( bool bold = false ) {
+      public string ToString( bool bold )
+          => string.Join( "\n", this.Select( kvp => (bold ? "<b>" : "")    + kvp.Key + ": "
+                                                    + (bold ? "</b>" : "") + kvp.Value ).ToArray() );
 
-         return string.Join( "\n", this.Select( kvp => (bold ? "<b>" : "") + kvp.Key + ": "
-                                                         + (bold ? "</b>" : "") + kvp.Value ).ToArray() );
-      }
-
-      public int total { get { return Values.Sum(); } }
+      public int total => Values.Sum();
    }
 
    public interface IHasFrequency {
@@ -60,23 +64,20 @@ namespace Lx {
    /// <summary>Allows key collections to include duplicate keys.</summary>
    public class DuplicateKeyComparer< TKey >: IComparer< TKey > where TKey: IComparable {
 
-      bool descending = false;
+      readonly bool descending;
 
-      public DuplicateKeyComparer( bool descending = false ) {
-
-         this.descending = descending;
-      }
+      public DuplicateKeyComparer( bool descending = false ) => this.descending = descending;
 
       public int Compare( TKey x, TKey y ) {
 
-         int result = descending ? y.CompareTo( x ) : x.CompareTo( y );
+         int result = (descending ? y?.CompareTo( x ) : x?.CompareTo( y )) ?? 0;
          return result == 0 ? 1 : result;
       }
    }
 
-   class DescendingComparer< T >: IComparer< T > {
+   public class DescendingComparer< T >: IComparer< T > {
 
-      public int Compare( T x, T y ) { return Comparer< T >.Default.Compare( y, x ); }
+      public int Compare( T x, T y ) => Comparer< T >.Default.Compare( y, x );
    }
    
    /// <summary>A queue with a fixed capacity that jettisons the oldest elements as new ones are added.</summary>
@@ -84,14 +85,14 @@ namespace Lx {
 
       int       _maxCount;
       public int MaxCount {
-         get { return _maxCount; }
+         get => _maxCount;
          set {
             _maxCount = value;
             Trim();
          }
       }
 
-      public CappedQueue( int maxCount ): base() { _maxCount = maxCount; }
+      public CappedQueue( int maxCount ) { _maxCount = maxCount; }
 
       public new void Enqueue( T item ) {
 
@@ -106,10 +107,10 @@ namespace Lx {
    /// (or close-enough items, if a tolerace function is provided).</summary>
    public class ListSet< T >: List< T > {
 
-      bool               addAtEnd;
-      Func< T, T, bool > tolerance;
+      readonly bool               addAtEnd;
+      readonly Func< T, T, bool > tolerance;
 
-      public ListSet( bool addAtEnd = false, Func< T, T, bool > toleranceFunc = null ) : base() {
+      public ListSet( bool addAtEnd = false, Func< T, T, bool > toleranceFunc = null ) {
 
          this.addAtEnd = addAtEnd;
          tolerance     = toleranceFunc;
@@ -125,9 +126,9 @@ namespace Lx {
       }
 
       public new void Add( T item ) {
-
+          
          if (!Contains( item )) {
-            if (tolerance == null || Count == 0 || !this.Any( x => !tolerance( x, item ) )) { base.Add( item ); }
+            if (tolerance == null || Count == 0 || this.All( x => tolerance( x, item ) )) { base.Add( item ); }
          }
          else if (addAtEnd) {
 
@@ -151,7 +152,7 @@ namespace Lx {
 
       float       _duration;
       public float Duration {
-         get { return _duration; }
+         get => _duration;
          set {
             _duration = value;
             Trim();
@@ -186,13 +187,14 @@ namespace Lx {
 
          while (this.Any() && this.First().Key < Time.time - _duration) {
 
-            if (interruptThreads) { (this.First().Value as System.Threading.Thread).Interrupt(); }
+            if (interruptThreads) { (this.First().Value as System.Threading.Thread)?.Interrupt(); }
             RemoveAt( 0 );
             lastModifiedTime = Time.time;
          }
       }
 
       /// <summary>Returns a list of the time intervals between each item.</summary>
+      [SuppressMessage( "ReSharper", "CompareOfFloatsByEqualityOperator" )]
       public List< float > Intervals {
          get {
             Trim();
@@ -217,8 +219,8 @@ namespace Lx {
    /// and won't give the same value twice within some specified minimum number of calls.</summary>
    public class VariantRandomiser {
 
-      CappedQueue< int > recent;
-      int                variants = 1;
+       readonly CappedQueue< int > recent;
+      int                          variants;
 
       public VariantRandomiser( int minBeforeRepeat, int variants ) {
 
@@ -229,70 +231,66 @@ namespace Lx {
 
       public int next {
          get {
-            int selection = UnityEngine.Random.Range( 0, variants - recent.Count );
+            int selection = Random.Range( 0, variants - recent.Count );
             for (int i = 0; i < selection; i++) { if (recent.Contains( i )) { selection++; } }
             recent.Enqueue( selection );
             return selection;
          }
       }
 
-      public void Reset() {
-
-         recent.Clear();
-      }
+      public void Reset() => recent.Clear();
    }
 
    public static partial class Utils {
-      
-      public static string ToListString( this IEnumerable< string > strings, string prefix = "" ) {
+
+       public static List< T > Shuffled< T >( this IEnumerable< T > collection ) {
+           
+           var shuffled = collection.ToList();
+
+           for (int i = 0; i < shuffled.Count - 1; i++) {
+
+               int r = Random.Range( i, shuffled.Count );
+               (shuffled[ i ], shuffled[ r ]) = (shuffled[ r ], shuffled[ i ]);
+           }
+            
+           return shuffled;
+       }
+
+       public static string ToListString( this IEnumerable< string > strings, string prefix = "" ) {
 
          return string.Join( "\n", strings.Select( s => prefix + s ).ToArray() );
       }
       
       /// <summary>Destroy all Unity Objects in this collection, optionally destroying the associated GameObject
       /// (if there is one) and clearing the collection.</summary>
-      public static void DestroyAll< T >( this ICollection<T> collection, bool destroyGameObject=true,
-                                          bool clear=true ) where T: UnityEngine.Object {
+      public static void DestroyAll( this ICollection<Object> collection, bool destroyGameObject =true,
+                                     bool clear =true ) {
          
-         foreach (T item in collection) {
+         foreach (Object item in collection) {
 
             if (!item) { continue; }
-            if (destroyGameObject) { item.DestroyGameObject(); } else { UnityEngine.Object.Destroy( item ); }
+            if (destroyGameObject) { item.DestroyGameObject(); } else { Object.Destroy( item ); }
          }
 
          if (clear) { collection.Clear(); }
       }
       
-      /// <summary>Destroy all Unity Object values in this collection, optionally destroying the associated GameObject
-      /// (if there is one) and clearing the collection.</summary>
-      public static void DestroyAllValues< T, U >( this IDictionary< T, U > collection, bool destroyGameObject=true )
-                                        where U: UnityEngine.Object {
-
-         foreach (U item in collection.Values) {
-
-            if (!item) { continue; }
-            if (destroyGameObject) { item.DestroyGameObject(); } else { UnityEngine.Object.Destroy( item ); }
-         }
-
-         collection.Clear();
-      }
-      
       /// <summary>Destroy the Unity Object and remove it from the collection,
       /// optionally destroying the associated GameObject (if there is one).</summary>
-      public static void Destroy< T >( this ICollection< T > collection, T obj, bool destroyGameObject=true )
-                            where T: UnityEngine.Object {
+      public static void Destroy( this ICollection< Object > collection, Object obj,
+                                  bool destroyGameObject =true ) {
 
          collection.Remove( obj );
          if (!obj) { return; }
-         if (destroyGameObject) { obj.DestroyGameObject(); } else { UnityEngine.Object.Destroy( obj ); }
+         if (destroyGameObject) { obj.DestroyGameObject(); } else { Object.Destroy( obj ); }
       }
       
       /// <summary>Destroy the Unity Object at the given key and remove it from the dictionary,
       /// optionally destroying the associated GameObject (if there is one).</summary>
       public static void Destroy< T, U >( this IDictionary< T, U > collection, T key, bool destroyGameObject=true )
-                               where U: UnityEngine.Object {
+                               where U: Object {
 
-         UnityEngine.Object o = collection.GetOrNull( key );
+         Object o = collection.GetOrNull( key );
 
          if (!o) {
 
@@ -301,26 +299,22 @@ namespace Lx {
          }
 
          collection.Remove( key );
-         if (destroyGameObject) { o.DestroyGameObject(); } else { UnityEngine.Object.Destroy( o ); }
+         if (destroyGameObject) { o.DestroyGameObject(); } else { Object.Destroy( o ); }
       }
 
       // modified from http://stackoverflow.com/a/653602
       /// <summary>Removes all elements matched by the given predicate. Returns the number of elements removed.</summary>
       public static int RemoveAll< TKey, TValue >( this SortedList< TKey, TValue > collection,
                                                    Func< KeyValuePair< TKey, TValue >, bool > predicate ) {
-
-         KeyValuePair< TKey, TValue > element;
-         int                          numRemoved = 0;
+          
+         int numRemoved = 0;
 
          for (int i = 0; i < collection.Count; i++) {
 
-            element = collection.ElementAt( i );
+            if (predicate( collection.ElementAt( i ) )) {
 
-            if (predicate( element )) {
-
-               collection.RemoveAt( i );
+               collection.RemoveAt( i-- );
                numRemoved++;
-               i--;
             }
          }
          return numRemoved;
@@ -330,87 +324,94 @@ namespace Lx {
       public static int RemoveValue< TKey, TValue >( this SortedList< TKey, TValue > collection, TValue value )
                                      where TValue: IEquatable< TValue > {
 
-         KeyValuePair< TKey, TValue > element;
-         int                          numRemoved = 0;
+          int numRemoved = 0;
 
          for (int i = 0; i < collection.Count; i++) {
 
-            element = collection.ElementAt( i );
+             if (collection.ElementAt( i ).Value.Equals( value )) {
 
-            if (element.Value.Equals( value )) {
-
-               collection.RemoveAt( i );
+               collection.RemoveAt( i-- );
                numRemoved++;
-               i--;
-            }
+             }
          }
          return numRemoved;
       }
       
       /// <summary>Returns a random element.</summary>
-      public static T Random< T >( this IEnumerable< T > collection ) {
+      public static T RandomElement< T >( this IEnumerable< T > collection ) {
 
-         return collection.ElementAt( UnityEngine.Random.Range( 0, collection.Count() ) );
+          IEnumerable< T > list = collection.ToList();
+          return list.ElementAt( Random.Range( 0, list.Count() ) );
       }
       
+      /// <summary>Returns a random element.</summary>
+      public static T RandomOrDefault< T >( this IEnumerable< T > collection )
+          => collection.DefaultIfEmpty().RandomElement();
+
       /// <summary>Returns the item at the given key if it is present, otherwise null.</summary>
-      public static T GetOrNull< U, T >( this IDictionary< U, T > dictionary, U key ) where T: class {
+      public static T GetOrNull< U, T >( this IDictionary< U, T > dictionary, U key ) where T: class
+          => dictionary?.ContainsKey( key ) ?? false ? dictionary[ key ] : null;
 
-         if (!dictionary.ContainsKey( key )) { return null; }
-         return dictionary[ key ];
-      }
-      
       /// <summary>Returns the first item matched by the given predicate, otherwise null.</summary>
-      public static T? FirstOrNull< T >( this ICollection< T > collection, Func< T, bool > predicate ) where T: struct {
-
-         if (collection.Any( i => predicate( i ) )) { return collection.First( i => predicate( i ) ); }
-         return null;
+      public static T? FirstOrNull< T >( this IEnumerable< T > collection, Func< T, bool > predicate ) where T: struct {
+          IEnumerable< T > enumerable = collection as T[] ?? collection.ToArray();
+          return enumerable.Any( predicate ) ? (T?) enumerable.First( predicate ) : null;
       }
-      
+
       /// <summary>Returns an element from the collection where each element has an associated frequency
       /// (relative probability of occurring).</summary>
       public static T WeightedRandom< T >( this IEnumerable< T > items ) where T: IHasFrequency {
 
-         float randomPoint = UnityEngine.Random.Range( 0.0f, items.Sum( i => i.frequency ) );
+          IEnumerable< T > list        = items.ToList();
+          float            randomPoint = Random.Range( 0.0f, list.Sum( i => i.frequency ) );
 
-         foreach (T item in items) {
+         foreach (T item in list) {
 
             if (randomPoint < item.frequency) { return item; }
             randomPoint -= item.frequency;
          }
 
-         Debug.LogWarning( "THIS SHOULD NEVER HAPPEN: iterated over entire weighted item list; returning last. List contents:\n" + string.Join( "\n", items.Select( i => i.ToString() + "; frequency: " + i.frequency ).ToArray() ) );
+         Debug.LogWarning( "THIS SHOULD NEVER HAPPEN: iterated over entire weighted item list; returning last. List contents:\n" + string.Join( "\n", list.Select( i => i + "; frequency: " + i.frequency ).ToArray() ) );
          throw new InvalidOperationException( "Iterated over whole weighted item list :(" );
       }
       
       /// <summary>Returns a random subset of num items from the collection.</summary>
-      public static IEnumerable< T > RandomSelection< T >( this IEnumerable< T > items, int num ) {
-
-         int total = items.Count();
-         if (num >= total) { return items; }
-         T[] selected = new T[ num ];
-         var random   = new System.Random();
+      public static IEnumerable< T > RandomSelection< T >( this IEnumerable< T > items, int num ) { 
+          
+         var list = items.ToList();
+         if (num >= list.Count) { return list; }
          int sourceIndex = 0, selectedIndex = 0;
 
-         foreach (T item in items) {
+         return list.Where( item => Random.value < (num - selectedIndex) / (double) (list.Count - sourceIndex++) )
+                    .Select( item => (selectedIndex++, item).item );
+      }
+      
+      public static void TestRandomSelection() {
 
-            if (random.NextDouble() < (num - selectedIndex) / (double) (total - sourceIndex++)) {
-               selected[ selectedIndex++ ] = item;
-            }
-         }
+          Debug.Log( "Testing random selection routine..." );
+          var array = new []{ 0, 10, 20, 30, 40, 50, 60, 70, 80, 90 };
 
-         Debug.Log( "RandomSelection()".Bold() + " returned " + selectedIndex + " * " + typeof( T ) );
-         return selected;
+          for (int i = 1; i <= 5; i++) {
+              
+              Debug.Log( $"{i} elements" );
+
+              for (int j = 0; j < 5; j++) {
+
+                  var selected = array.RandomSelection( i ).ToArray();
+                  Debug.Log( PrintVals( selected ) );
+              }
+          }
       }
       
       /// <summary>Returns the item for which the selector gives the lowest value.</summary>
       public static T MinBy< T, TBy >( this IEnumerable< T > items, Func< T, TBy > selector )
                           where TBy: IComparable {
 
-         T   currentItem = items.First();
-         TBy currentMin  = selector( currentItem );
+          var list        = items.ToList();
+          T   currentItem = list.First();
+          TBy currentMin  = selector( currentItem );
 
-         foreach (T item in items) {
+         foreach (T item in list) {
 
             TBy value = selector( item );
 
@@ -427,11 +428,12 @@ namespace Lx {
       /// <summary>Returns the item for which the selector gives the highest value.</summary>
       public static T MaxBy< T, TBy >( this IEnumerable< T > items, Func< T, TBy > selector )
                           where TBy: IComparable {
-         
-         T   currentItem = items.First();
-         TBy currentMin  = selector( currentItem );
 
-         foreach (T item in items) {
+          var list        = items.ToList();
+          T   currentItem = list.First();
+          TBy currentMin  = selector( currentItem );
+
+         foreach (T item in list) {
 
             TBy value = selector( item );
 
@@ -462,45 +464,45 @@ namespace Lx {
       }
       
       /// <summary>Returns a string with all values in an array, optionally along with their type.</summary>
-      public static string PrintVals< T >( T[] data, bool type=true, bool newline=false ) {
+      public static string PrintVals< T >( IEnumerable< T > data, bool type =false, bool newline =false ) {
+
+         if (data == null) { return "<null collection>"; }
 
          return string.Join( newline ? "\n" : ", ",
-                             data.Select( val => (type ? val.GetType().Name + ": " : "") + val.ToString() ).ToArray() );
+                             data.Select( val => (type ? val?.GetType().Name + ": " : "") + val ).ToArray() );
       }
       
       /// <summary>Returns a string with all keys and values in a dictionary, separated by newlines.</summary>
-      public static string PrintVals< TKey, TValue >( IDictionary< TKey, TValue > data,
-                                                      bool boldKeys=true, bool boldVals=false ) {
-
-         return string.Join( "\n", data.Select( kvp =>
-              (boldKeys ? (kvp.Key.ToString() + ": ").Bold() : (kvp.Key.ToString() + ": "))
-            + (boldVals ? kvp.Value.ToString().Bold() : kvp.Value.ToString()) ).ToArray() );
-      }
+      public static string PrintVals< TKey, TValue >( IDictionary< TKey, TValue > data, bool boldKeys =true,
+                                                      bool boldVals =false )
+      
+          => string.Join( "\n", data.Select( kvp => (boldKeys ? (kvp.Key + ": ").Bold() : kvp.Key + ": ")
+                                                    + (boldVals ? kvp.Value.ToString().Bold()
+                                                                : kvp.Value.ToString()) ).ToArray() );
 
       struct PrintableValue {
 
-         public string name;
-         public string val;
+         public string name, val;
       }
 
-      public static PrintValList PrintVals() { return new PrintValList(); }
-      
+      public static PrintValList PrintVals() => new PrintValList();
+
       /// <summary>Start a PrintValList of name-value pairs, beginning with the first element.</summary>
-      public static PrintValList PrintVals< T >( string n, T v ) { return new PrintValList().Add( n, v ); }
-      
+      public static PrintValList PrintVals< T >( string n, T v ) => new PrintValList().Add( n, v );
+
       /// <summary>Start a PrintValList of name-value pairs, beginning with the first element.
       /// Value is the result of the given function.</summary>
-      public static PrintValList PrintVals< T >( string n, Func< T > f ) { return new PrintValList().Add( n, f ); }
-      
+      public static PrintValList PrintVals< T >( string n, Func< T > f ) => new PrintValList().Add( n, f );
+
       /// <summary>A list of name-value pairs, which implicitly converts to a string.</summary>
       public class PrintValList {
 
-         List< PrintableValue > vals = new List< PrintableValue >();
+          readonly List< PrintableValue > vals = new List< PrintableValue >();
          
          /// <summary>Add a new name-value element to the PrintValList.</summary>
          public PrintValList Add< T >( string n, T v ) {
 
-            string val = v == null ? val = "null" : v.ToString();
+            string val = v?.ToString() ?? "null";
             vals.Add( new PrintableValue { name = n, val = val } );
             return this;
          }
@@ -509,28 +511,27 @@ namespace Lx {
          public PrintValList Add< T >( string n, Func< T > f ) {
 
             string val = "null exception";
-            try { val = f().ToString(); } catch { }
+            try { val = f().ToString(); }
+            catch {
+                // ignored
+            }
             vals.Add( new PrintableValue { name = n, val = val } );
             return this;
          }
          
          /// <summary>Output all name-value pairs to a string with the given separator.</summary>
-         public string ToString( string separator = "\n", bool boldNames=true, bool boldValues=false ) {
+         public string ToString( string separator = "\n", bool boldNames =true, bool boldValues =false )
+             => string.Join( separator, vals.Select( v
+                                             => (boldNames ? (v.name + ": ").Bold() : v.name + ": ")
+                                              + (boldValues ? (v.val != null ? v.val.ToString() : "null").Bold()
+                                                            :  v.val != null ? v.val.ToString() : "null") ).ToArray() );
 
-            return string.Join( separator, vals.Select( v => (boldNames ? (v.name + ": ").Bold()
-                                                                        :  v.name + ": ")
-                                                  + (boldValues ? (v.val != null ? v.val.ToString() : "null").Bold()
-                                                                :  v.val != null ? v.val.ToString() : "null") ).ToArray() );
-         }
-         
          /// <summary>Output all name-value pairs to a string with a newline separator.</summary>
-         public static implicit operator string( PrintValList list ) { return list.ToString(); }
-         
-         /// <summary>Output all name-value pairs to the console with the given separator.</summary>
-         public void Log( bool boldNames=true, bool boldValues=false ) {
+         public static implicit operator string( PrintValList list ) => list.ToString();
 
-            Debug.Log( ToString( "\n", boldNames, boldValues ) );
-         }
+         /// <summary>Output all name-value pairs to the console with the given separator.</summary>
+         public void Log( bool boldNames =true, bool boldValues =false )
+             => Debug.Log( ToString( "\n", boldNames, boldValues ) );
       }
    }
 }

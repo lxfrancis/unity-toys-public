@@ -52,9 +52,9 @@ namespace Lx {
 				
 				   throw new System.ArgumentOutOfRangeException();
 			   }
-			   return array[ x.Ring( dimensions.x, 0 ),
-			                 y.Ring( dimensions.y, 0 ),
-			                 z.Ring( dimensions.z, 0 ) ];
+			   return array[ x.Ring( dimensions.x ),
+			                 y.Ring( dimensions.y ),
+			                 z.Ring( dimensions.z ) ];
 		   }
 		   set {
 			   if (!cyclic && (x < offset.x || x >= dimensions.x + offset.x
@@ -64,12 +64,12 @@ namespace Lx {
 				   throw new System.ArgumentOutOfRangeException( "x: " + x + "; y: " + y + "; z: " + z
 				                                                     + "; current range: " + currentRangeString );
 			   }
-			   array[ x.Ring( dimensions.x, 0 ),
-			          y.Ring( dimensions.y, 0 ),
-			          z.Ring( dimensions.z, 0 ) ] = value;
+			   array[ x.Ring( dimensions.x ),
+			          y.Ring( dimensions.y ),
+			          z.Ring( dimensions.z ) ] = value;
 
 			   if (x == 0 && z == 0) {
-				   Debug.Log( "Setting new value at external y: " + y + "; internal y: " + y.Ring( dimensions.y, offset.y ) + "; curr y offset: " + offset.y );
+				   Debug.Log( "Setting new value at external y: " + y + "; internal y: " + (y + offset.y).Ring( dimensions.y ) + "; curr y offset: " + offset.y );
 			   }
 		   }
 	   }
@@ -107,12 +107,12 @@ namespace Lx {
 
 						   if (x == 0 && z == 0) {
 
-							   Debug.Log( "Erasing value at iteration y: " + y + "; mapped to y: " + y.Ring( dimensions.y, this.offset.y ) );
+							   Debug.Log( "Erasing value at iteration y: " + y + "; mapped to y: " + (y + this.offset.y).Ring( dimensions.y ) );
 						   }
 
-						   array[ x.Ring( dimensions.x, this.offset.x ),
-						          y.Ring( dimensions.y, this.offset.y ),
-						          z.Ring( dimensions.z, this.offset.z ) ] = fillValue;
+						   array[ (x + this.offset.x).Ring( dimensions.x ),
+						          (y + this.offset.y).Ring( dimensions.y ),
+						          (z + this.offset.z).Ring( dimensions.z ) ] = fillValue;
 					   }
 				   }
 			   }
