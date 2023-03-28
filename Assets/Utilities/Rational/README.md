@@ -9,12 +9,12 @@ Should be considered early/experimental; updates to the implementation may not b
 Requires C# 9.0 (Available in Unity 2021.2 and up; Unity is *not* required for the struct itself)
 
 
-# Updates #
+### Updates ###
 
 - 2023-03-28: Fixed edge case error in equality logic with infinite values where the internal values of the struct were non-standard (e.g. through bit fiddling or deserialisation)
 
 
-# Features #
+### Features ###
 
 - Unity serialisation and custom property drawer that supports entering fractions, integers, decimals, and special values.
 - Automatic simplification to smallest representation (by greatest common factor)
