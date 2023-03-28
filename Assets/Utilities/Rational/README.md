@@ -32,6 +32,7 @@ Requires C# 9.0 (Available in Unity 2021.2 and up; Unity is *not* required for t
 Not yet implemented:
 - Proper overflow handling
 - Various planned improvements to conversions from floating point values
+- Uninitialised value is currently equal to NaN, but it should be zero - this will change
 
 
 Examples of constructing rational 3/5:
