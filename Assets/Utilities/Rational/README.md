@@ -37,8 +37,15 @@ Not yet implemented:
 Examples of constructing rational 3/5:
 
 ```cs
-Rational r = new Rational( 3, 5 );
-Rational r = new( 3, 5 );
-Rational r = 3.Over( 5 );  // int extension method
-Rational r = 0.6f; // converts to 3/5 but can be considerably slower depending on value
+// conversion from int and overloaded arithmetic operator
+Rational r1 = (Rational) 3 / 5; 
+
+// constructor
+Rational r2 = new Rational( 3, 5 );  // or new( 3, 5 );
+
+// int extension method
+Rational r3 = 3.Over( 5 );
+
+// best fit conversion from floating point - can be considerably slower depending on value
+Rational r4 = 0.6f; 
 ```
