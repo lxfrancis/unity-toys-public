@@ -10,6 +10,7 @@ namespace Lx {
     }
     
 
+    // TODO: Default value should be zero, not NaN
     [Serializable]
     public struct Rational: IEquatable< Rational >, IComparable, IComparable< Rational >, IConvertible {
 
@@ -129,6 +130,8 @@ namespace Lx {
             if (str == null) { throw new ArgumentNullException( nameof( str ) ); }
 
             if (str.Length == 0) { throw new ArgumentException( "String is empty", nameof( str ) ); }
+
+            str = str.Replace( "(", "" ).Replace( ")", "" );
             
             string[] tokens = str.Split( '/' );
 
@@ -136,7 +139,7 @@ namespace Lx {
                 && int.TryParse( tokens[ 0 ].Trim(), out int a )
                 && int.TryParse( tokens[ 1 ].Trim(), out int b )) {
                 
-                return new Rational( a, b ); // get simplified components
+                return new Rational( a, b );
             }
 
             if (tokens.Length == 1) {
@@ -156,6 +159,8 @@ namespace Lx {
                 r = Zero;
                 return false;
             }
+
+            str = str.Replace( "(", "" ).Replace( ")", "" );
             
             string[] tokens = str.Split( '/' );
 
@@ -163,7 +168,7 @@ namespace Lx {
                 && int.TryParse( tokens[ 0 ].Trim(), out int a )
                 && int.TryParse( tokens[ 1 ].Trim(), out int b )) {
                 
-                r = new Rational( a, b ); // get simplified components
+                r = new Rational( a, b );
                 return true;
             }
 
@@ -475,14 +480,15 @@ namespace Lx {
 
 #region Equality and comparison operators
 
-        public static bool operator ==( Rational l, Rational r ) =>  l.Equals( r );
-        public static bool operator !=( Rational l, Rational r ) => !l.Equals( r );
+        public static bool operator ==( Rational l, Rational r ) =>  l.EqualsOperator( r );
+        public static bool operator !=( Rational l, Rational r ) => !l.EqualsOperator( r );
 
-        public static bool operator > ( Rational l, Rational r ) => l.CompareTo( r ) ==  1;
-        public static bool operator < ( Rational l, Rational r ) => l.CompareTo( r ) == -1;
+        // TODO: somehow inline this because CompareTo() also does (different) NaN checks
+        public static bool operator > ( Rational l, Rational r ) => !l.isNaN && !r.isNaN && l.CompareTo( r ) ==  1;
+        public static bool operator < ( Rational l, Rational r ) => !l.isNaN && !r.isNaN && l.CompareTo( r ) == -1;
 
-        public static bool operator >=( Rational l, Rational r ) => l.CompareTo( r ) >=  0;
-        public static bool operator <=( Rational l, Rational r ) => l.CompareTo( r ) <=  0;
+        public static bool operator >=( Rational l, Rational r ) => !l.isNaN && !r.isNaN && l.CompareTo( r ) >=  0;
+        public static bool operator <=( Rational l, Rational r ) => !l.isNaN && !r.isNaN && l.CompareTo( r ) <=  0;
         
 
         public static bool operator ==( Rational r, float   s ) => (float) r == s;
@@ -517,30 +523,44 @@ namespace Lx {
         public static bool operator !=( object  o, Rational r ) => r.Equals( o );
         
 
-        public static bool operator > ( Rational r, object   o ) => r.CompareTo( o ) ==  1;
-        public static bool operator < ( Rational r, object   o ) => r.CompareTo( o ) == -1;
+        // TODO: somehow inline this because CompareTo() also does (different) NaN checks
+        public static bool operator > ( Rational r, object   o ) => !r.isNaN && r.CompareTo( o ) ==  1;
+        public static bool operator < ( Rational r, object   o ) => !r.isNaN && r.CompareTo( o ) == -1;
   
-        public static bool operator >=( Rational r, object   o ) => r.CompareTo( o ) >=  0;
-        public static bool operator <=( Rational r, object   o ) => r.CompareTo( o ) <=  0;
+        public static bool operator >=( Rational r, object   o ) => !r.isNaN && r.CompareTo( o ) >=  0;
+        public static bool operator <=( Rational r, object   o ) => !r.isNaN && r.CompareTo( o ) <=  0;
           
-        public static bool operator > ( object   o, Rational r ) => r.CompareTo( o ) == -1;
-        public static bool operator < ( object   o, Rational r ) => r.CompareTo( o ) ==  1;
+        public static bool operator > ( object   o, Rational r ) => !r.isNaN && r.CompareTo( o ) == -1;
+        public static bool operator < ( object   o, Rational r ) => !r.isNaN && r.CompareTo( o ) ==  1;
            
-        public static bool operator >=( object   o, Rational r ) => r.CompareTo( o ) <=  0;
-        public static bool operator <=( object   o, Rational r ) => r.CompareTo( o ) >=  0;
+        public static bool operator >=( object   o, Rational r ) => !r.isNaN && r.CompareTo( o ) <=  0;
+        public static bool operator <=( object   o, Rational r ) => !r.isNaN && r.CompareTo( o ) >=  0;
         
 #endregion
         
         
 #region Equality and comparison logic
 
-        public bool Equals( Rational other ) => numerator switch {
-            0 => denominator == 0 == (other.denominator == 0),
-            _ => denominator switch {
-                0 => numerator > 0 == (other.numerator == 0),
-                _ => numerator == other.numerator && denominator == other.denominator
-            }
-        };
+        public bool Equals( Rational other ) {
+                    
+            if (isNaN)              { return other.isNaN;              }
+            if (isZero)             { return other.isZero;             }
+            if (isPositiveInfinity) { return other.isPositiveInfinity; }
+            if (isNegativeInfinity) { return other.isNegativeInfinity; }
+                    
+            return numerator == other.numerator && denominator == other.denominator;
+        }
+
+        
+        public bool EqualsOperator( Rational other ) {  // for consistency with floating point type behaviour
+            
+            if (isNaN)              { return false;                    }
+            if (isZero)             { return other.isZero;             }
+            if (isPositiveInfinity) { return other.isPositiveInfinity; }
+            if (isNegativeInfinity) { return other.isNegativeInfinity; }
+            
+            return numerator == other.numerator && denominator == other.denominator;
+        }
 
 
         public override bool Equals( object obj ) => obj switch {
