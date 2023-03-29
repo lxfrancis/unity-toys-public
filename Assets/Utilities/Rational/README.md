@@ -29,11 +29,6 @@ Requires C# 9.0 (Available in Unity 2021.2 and up; Unity is *not* required for t
 - String parsing to Rational that allows all parseable int and float values as well as directly specified fractions (e.g. `"7/9"`)
 - Nice `ToString()` which simplifies to integers and other special values where possible
 
-Not yet implemented:
-- Proper overflow handling
-- Various planned improvements to conversions from floating point values
-- Uninitialised value is currently equal to NaN, but it should be zero - this will change
-
 
 Examples of constructing rational 3/5:
 
@@ -50,3 +45,14 @@ Rational r3 = 3.Over( 5 );
 // best fit conversion from floating point - can be considerably slower depending on value
 Rational r4 = 0.6f; 
 ```
+
+Not yet implemented:
+- More robust overflow handling
+- Various planned improvements to conversions from floating point values
+- String parsing improvement - using the number of decimal places in the string as the basis of the required fraction fit accuracy
+- Uninitialised value is currently equal to NaN, but it should be zero - this will change
+- Documentation
+- Long version (128-bit with 64-bit components)
+- Typical math library functions (Pow, Abs, etc)
+- Certain convenience properties (max and min value, etc)
+- Support for c# 8
